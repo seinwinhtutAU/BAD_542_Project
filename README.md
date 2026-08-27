@@ -57,11 +57,28 @@ npm install
 npm run dev
 ```
 
-Full stack via Docker Compose:
+Full stack locally via Docker Compose:
 
 ```bash
-cp .env.example .env
+cp docker/.env.example docker/.env   # compose reads .env from the same dir as the compose file, not the repo root
 docker compose -f docker/docker-compose.yml up --build
+```
+
+## Deployment
+
+`deploy.sh` is for the **VPS**, not local dev — it runs `git pull origin main` then rebuilds the Docker Compose stack, so it only makes sense on a machine that's a persistent clone of this repo tracking `origin/main`. Locally, just use `docker compose -f docker/docker-compose.yml up --build` directly, or run `npm run dev` in `backend/`/`frontend/` without Docker.
+
+One-time setup on the server:
+
+1. `git clone` this repo, install Docker + Docker Compose.
+2. Create `docker/.env` and `backend/.env` by hand with real production values — both are gitignored, so `git pull` never brings them in.
+3. Set `NODE_ENV=production` in `backend/.env`. This is required, not optional: [bootstrapSecrets.js](backend/src/config/bootstrapSecrets.js) only fetches secrets (`DATABASE_URL`, `JWT_SECRET`, etc.) from Azure Key Vault when `NODE_ENV=production`. Anything other than `production` skips Key Vault and falls back to whatever's literally sitting in `backend/.env`, which violates the "must not use local `.env` files for production secrets" requirement in [docs/req.md](docs/req.md). `deploy.sh` refuses to run if this isn't set correctly.
+4. Wire up `nginx/project-location.conf` inside the VPS's existing Nginx `server {}` block for the `/project` path.
+
+After that, redeploy any time with:
+
+```bash
+./deploy.sh
 ```
 
 ## Peer API integration
