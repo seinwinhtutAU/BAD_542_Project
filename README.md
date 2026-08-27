@@ -66,20 +66,36 @@ docker compose -f docker/docker-compose.yml up --build
 
 ## Deployment
 
-`deploy.sh` is for the **VPS**, not local dev — it runs `git pull origin main` then rebuilds the Docker Compose stack, so it only makes sense on a machine that's a persistent clone of this repo tracking `origin/main`. Locally, just use `docker compose -f docker/docker-compose.yml up --build` directly, or run `npm run dev` in `backend/`/`frontend/` without Docker.
+`deploy.sh` runs on the **VPS only**, not on your laptop. It does two things: pulls the latest code from `origin/main`, then rebuilds and restarts the Docker containers. Running it locally wouldn't make sense since you already have the latest code — for local work, just use `docker compose -f docker/docker-compose.yml up --build`, or `npm run dev` in `backend/`/`frontend/` as shown above.
 
-One-time setup on the server:
+### One-time setup on the server
 
-1. `git clone` this repo, install Docker + Docker Compose.
-2. Create `docker/.env` and `backend/.env` by hand with real production values — both are gitignored, so `git pull` never brings them in.
-3. Set `NODE_ENV=production` in `backend/.env`. This is required, not optional: [bootstrapSecrets.js](backend/src/config/bootstrapSecrets.js) only fetches secrets (`DATABASE_URL`, `JWT_SECRET`, etc.) from Azure Key Vault when `NODE_ENV=production`. Anything other than `production` skips Key Vault and falls back to whatever's literally sitting in `backend/.env`, which violates the "must not use local `.env` files for production secrets" requirement in [docs/req.md](docs/req.md). `deploy.sh` refuses to run if this isn't set correctly.
-4. Wire up `nginx/project-location.conf` inside the VPS's existing Nginx `server {}` block for the `/project` path.
+1. **Clone the repo and install Docker.**
+   ```bash
+   git clone https://github.com/seinwinhtutAU/BAD_542_Project.git
+   cd BAD_542_Project
+   ```
+   Install Docker + Docker Compose on the VPS if not already present.
 
-After that, redeploy any time with:
+2. **Create the env files by hand.** `docker/.env` and `backend/.env` are both gitignored on purpose (they hold real passwords/secrets), so cloning or pulling never brings them along — you create them once, directly on the server:
+   ```bash
+   cp docker/.env.example docker/.env    # set real MySQL passwords
+   cp backend/.env.example backend/.env  # set real DATABASE_URL, JWT_SECRET, etc.
+   ```
+
+3. **Set `NODE_ENV=production` in `backend/.env`.** This one line matters a lot: [bootstrapSecrets.js](backend/src/config/bootstrapSecrets.js) only fetches secrets from Azure Key Vault when `NODE_ENV=production`. Leave it as `development` and the app quietly falls back to whatever's typed into `backend/.env` instead — which is exactly what the course requirements forbid ("must NOT use local `.env` files for production secrets", see [docs/req.md](docs/req.md)). To make this hard to get wrong, `deploy.sh` checks this value first and refuses to deploy if it isn't set correctly.
+
+4. **Point Nginx at the containers.** Add the rules in [nginx/project-location.conf](nginx/project-location.conf) inside the VPS's existing Nginx `server {}` block, so requests to `/project/...` reach the frontend and backend containers without disturbing the site's other paths (e.g. `/content`, `/api`).
+
+### Every deploy after that
+
+Once the server is set up, shipping a new change is just:
 
 ```bash
 ./deploy.sh
 ```
+
+This pulls the latest `main`, rebuilds the Docker images, and restarts the containers with `docker compose up -d --build`.
 
 ## Peer API integration
 
