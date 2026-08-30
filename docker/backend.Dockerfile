@@ -5,4 +5,4 @@ RUN npm install --omit=dev
 COPY backend .
 RUN npx prisma generate
 EXPOSE 4000
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
