@@ -4,3 +4,5 @@ build/
 .env
 *.log
 .DS_Store
+docs/VPS_DEPLOYMENT_RUNBOOK.md
+docs/TEAM_TASKS.md
