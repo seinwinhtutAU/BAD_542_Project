@@ -28,6 +28,12 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   }
 
+  async function loginWithAd(adIdToken) {
+    const { data } = await apiClient.post('/api/auth/login/ad', { adToken: adIdToken });
+    localStorage.setItem('token', data.token);
+    setUser(data.user);
+  }
+
   function logout() {
     localStorage.removeItem('token');
     setUser(null);
@@ -35,7 +41,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, loginDev, logout,
+      user, loading, loginDev, loginWithAd, logout,
     }}
     >
       {children}

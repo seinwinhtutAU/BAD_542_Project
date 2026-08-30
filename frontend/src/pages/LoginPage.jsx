@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMsal } from '@azure/msal-react';
 import { useAuth } from '../context/AuthContext';
+import { loginRequest } from '../authConfig';
 
 const ROLE_REDIRECT = {
   STUDENT: '/student',
@@ -9,7 +11,8 @@ const ROLE_REDIRECT = {
 };
 
 export default function LoginPage() {
-  const { loginDev, user } = useAuth();
+  const { loginDev, loginWithAd, user } = useAuth();
+  const { instance } = useMsal();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +25,16 @@ export default function LoginPage() {
       await loginDev(email, password);
     } catch (err) {
       setError('Invalid credentials');
+    }
+  }
+
+  async function handleAdLogin() {
+    setError('');
+    try {
+      const result = await instance.loginPopup(loginRequest);
+      await loginWithAd(result.idToken);
+    } catch (err) {
+      setError('Microsoft sign-in failed');
     }
   }
 
@@ -38,7 +51,7 @@ export default function LoginPage() {
         <button type="submit">Log in</button>
       </form>
       {error && <p role="alert">{error}</p>}
-      <button type="button" disabled>Log in with University AD (coming soon)</button>
+      <button type="button" onClick={handleAdLogin}>Log in with University AD</button>
     </div>
   );
 }
