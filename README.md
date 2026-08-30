@@ -64,39 +64,6 @@ cp docker/.env.example docker/.env   # compose reads .env from the same dir as t
 docker compose -f docker/docker-compose.yml up --build
 ```
 
-## Deployment
-
-`deploy.sh` runs on the **VPS only**, not on your laptop. It does two things: pulls the latest code from `origin/main`, then rebuilds and restarts the Docker containers. Running it locally wouldn't make sense since you already have the latest code — for local work, just use `docker compose -f docker/docker-compose.yml up --build`, or `npm run dev` in `backend/`/`frontend/` as shown above.
-
-### One-time setup on the server
-
-1. **Clone the repo and install Docker.**
-   ```bash
-   git clone https://github.com/seinwinhtutAU/BAD_542_Project.git
-   cd BAD_542_Project
-   ```
-   Install Docker + Docker Compose on the VPS if not already present.
-
-2. **Create the env files by hand.** `docker/.env` and `backend/.env` are both gitignored on purpose (they hold real passwords/secrets), so cloning or pulling never brings them along — you create them once, directly on the server:
-   ```bash
-   cp docker/.env.example docker/.env    # set real MySQL passwords
-   cp backend/.env.example backend/.env  # set real DATABASE_URL, JWT_SECRET, etc.
-   ```
-
-3. **Set `NODE_ENV=production` in `backend/.env`.** This one line matters a lot: [bootstrapSecrets.js](backend/src/config/bootstrapSecrets.js) only fetches secrets from Azure Key Vault when `NODE_ENV=production`. Leave it as `development` and the app quietly falls back to whatever's typed into `backend/.env` instead — which is exactly what the course requirements forbid ("must NOT use local `.env` files for production secrets", see [docs/req.md](docs/req.md)). To make this hard to get wrong, `deploy.sh` checks this value first and refuses to deploy if it isn't set correctly.
-
-4. **Point Nginx at the containers.** Add the rules in [nginx/project-location.conf](nginx/project-location.conf) inside the VPS's existing Nginx `server {}` block, so requests to `/project/...` reach the frontend and backend containers without disturbing the site's other paths (e.g. `/content`, `/api`).
-
-### Every deploy after that
-
-Once the server is set up, shipping a new change is just:
-
-```bash
-./deploy.sh
-```
-
-This pulls the latest `main`, rebuilds the Docker images, and restarts the containers with `docker compose up -d --build`.
-
 ## Peer API integration
 
 - **Consuming**: `GET {PEER_API_BASE_URL}/api/alerts` with header `x-api-key: PEER_API_KEY_OUTBOUND` — fetches active campus emergency alerts before confirming an appointment.
