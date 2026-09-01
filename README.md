@@ -60,18 +60,7 @@ cp docker/.env.example docker/.env   # set MYSQL_PASSWORD / MYSQL_ROOT_PASSWORD
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql   # publishes 3306 to localhost
 ```
 
-Alternatively, use a MySQL install of your own. `prisma migrate dev` needs a "shadow database" to diff against, so the user needs privileges to create databases, not just access `campus_health`:
-
-```bash
-mysql -u root <<'EOF'
-CREATE DATABASE IF NOT EXISTS campus_health;
-CREATE USER IF NOT EXISTS 'campus_health'@'localhost' IDENTIFIED BY 'campus_health_dev';
-GRANT ALL PRIVILEGES ON *.* TO 'campus_health'@'localhost';
-FLUSH PRIVILEGES;
-EOF
-```
-
-Either way, `backend/.env`'s `DATABASE_URL` should end up as:
+`backend/.env`'s `DATABASE_URL` should end up as:
 
 ```
 DATABASE_URL="mysql://campus_health:campus_health_dev@localhost:3306/campus_health"
