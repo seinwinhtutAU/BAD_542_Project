@@ -6,30 +6,19 @@ See [docs/req.md](docs/req.md) and [docs/Design_Document_Campus_Health_Appointme
 
 ## Quick start
 
-Gets you logged in at `http://localhost:5173` with a dev-login test account. No Azure AD setup needed for this path — see [Setup](#setup) below for AD login, MySQL alternatives, and the Docker Compose / VPS deploy details this glosses over.
+Gets you logged in at `http://localhost:5173` with a dev-login test account. No Azure AD setup needed for this path — see [Setup](#setup) below for AD login and the Docker Compose / VPS deploy details this glosses over.
 
 ```bash
 # 1. Database (Docker)
 cp docker/.env.example docker/.env
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql
 
-# 2. Backend
+# 2. Backend (also seeds the admin@test.com / admin123 test account)
 cd backend && cp .env.example .env
 npm install && npx prisma migrate dev
 npm run dev &   # keep this running; :4000
 
-# 3. Create a test account (fresh DB has no users)
-node -e "
-const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
-new PrismaClient().user.upsert({
-  where: { email: 'admin@test.com' },
-  update: {},
-  create: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN', password: bcrypt.hashSync('admin123', 10) },
-}).then(console.log);
-"
-
-# 4. Frontend
+# 3. Frontend
 cd ../frontend && cp .env.example .env
 npm install && npm run dev   # :5173
 ```
@@ -78,25 +67,7 @@ npx prisma migrate dev
 npm run dev
 ```
 
-There is no seed script, so a fresh database has no users — the dev-login form (`/api/auth/login/dev`) has nothing to authenticate against until you create one. Create a local test account with:
-
-```bash
-node -e "
-const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-(async () => {
-  const password = await bcrypt.hash('admin123', 10);
-  const user = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
-    update: {},
-    create: { email: 'admin@test.com', name: 'Admin', password, role: 'ADMIN' },
-  });
-  console.log(user);
-  await prisma.\$disconnect();
-})();
-"
-```
+`prisma migrate dev` runs [src/prisma/seed.js](backend/src/prisma/seed.js) automatically after applying migrations, which upserts a dev-login test account (`admin@test.com` / `admin123`, role `ADMIN`) — the dev-login form (`/api/auth/login/dev`) has nothing to authenticate against on a fresh database otherwise. Re-run it anytime with `npx prisma db seed`.
 
 Signing in via "Log in with University AD" doesn't need a seeded user — `POST /api/auth/login/ad` upserts a `STUDENT` user from the validated Azure AD token automatically. That flow needs `AZURE_AD_TENANT_ID`/`AZURE_AD_CLIENT_ID` in `backend/.env` to match `VITE_AZURE_AD_TENANT_ID`/`VITE_AZURE_AD_CLIENT_ID` in `frontend/.env`, and your browser to allow the Microsoft sign-in popup (Chrome silently blocks it on some sites — check the address bar for a blocked-popup icon if the button seems to do nothing).
 
