@@ -1,0 +1,18 @@
+# Local-only override, never used by deploy.sh on the VPS. Two independent uses:
+#   - `up -d mysql` to publish MySQL's port so a host-run backend (npm run dev)
+#     can reach it at localhost:3306.
+#   - `up -d --build` for the full dockerized stack, testing directly at
+#     http://localhost:8081/ without the VPS's outer nginx that strips /project/.
+services:
+  mysql:
+    ports:
+      - "3306:3306"
+
+  frontend:
+    build:
+      args:
+        VITE_BASE_PATH: /
+        VITE_API_BASE_URL: /
+        # Requires http://localhost:8081/ to also be registered as a redirect URI
+        # (platform type: Single-page application) on the Azure AD app registration.
+        VITE_AZURE_AD_REDIRECT_URI: http://localhost:8081/
