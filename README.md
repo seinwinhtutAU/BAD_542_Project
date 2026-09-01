@@ -40,56 +40,53 @@ The frontend's production build is served under the `/project` path (`VITE_BASE_
 
 ## Setup
 
-### Database
+The detailed version of Quick Start above, with the reasoning behind each step.
 
-The easiest path is Docker Compose's `mysql` service, since its credentials already match `backend/.env`. The base `docker-compose.yml` deliberately does *not* publish MySQL's port to the host — on the VPS that collides with an unrelated native `mysqld` already bound to `0.0.0.0:3306` (see [docker/docker-compose.local.yml](docker/docker-compose.local.yml)'s comment for the story). For a host-run backend (`npm run dev`), publish the port via the local-only override instead, which `deploy.sh` never touches:
+### 1. Database
+
+Start MySQL via Docker Compose — its credentials already match `backend/.env`:
 
 ```bash
 cp docker/.env.example docker/.env   # set MYSQL_PASSWORD / MYSQL_ROOT_PASSWORD
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql   # publishes 3306 to localhost
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql
 ```
 
-`backend/.env`'s `DATABASE_URL` should end up as:
+- `backend/.env`'s `DATABASE_URL` should end up as `mysql://campus_health:campus_health_dev@localhost:3306/campus_health` (use a real password and narrower grants for anything beyond local dev).
+- The `-f docker/docker-compose.local.yml` part matters: the base `docker-compose.yml` deliberately does *not* publish MySQL's port to the host, because on the VPS that collides with an unrelated native `mysqld` already bound to `0.0.0.0:3306` (see that file's comment for the story). The local override adds the port publish back just for your machine — `deploy.sh` never touches it.
 
-```
-DATABASE_URL="mysql://campus_health:campus_health_dev@localhost:3306/campus_health"
-```
-
-(Use a real password and narrower grants for anything beyond local dev.)
-
-### Backend
+### 2. Backend
 
 ```bash
 cd backend
-cp .env.example .env   # then edit DATABASE_URL as above, and AZURE_AD_* to match the frontend
+cp .env.example .env   # edit DATABASE_URL from step 1, and AZURE_AD_* to match the frontend
 npm install
 npx prisma migrate dev
-npm run dev
+npm run dev             # :4000
 ```
 
-`prisma migrate dev` runs [src/prisma/seed.js](backend/src/prisma/seed.js) automatically after applying migrations, which upserts a dev-login test account (`admin@test.com` / `admin123`, role `ADMIN`) — the dev-login form (`/api/auth/login/dev`) has nothing to authenticate against on a fresh database otherwise. Re-run it anytime with `npx prisma db seed`.
+- `prisma migrate dev` runs [src/prisma/seed.js](backend/src/prisma/seed.js) automatically after applying migrations, which upserts a dev-login test account (`admin@test.com` / `admin123`, role `ADMIN`) — the dev-login form (`/api/auth/login/dev`) has nothing to authenticate against on a fresh database otherwise. Re-run it anytime with `npx prisma db seed`.
+- Signing in via "Log in with University AD" doesn't need a seeded user — `POST /api/auth/login/ad` upserts a `STUDENT` user from the validated Azure AD token automatically. That flow needs `AZURE_AD_TENANT_ID`/`AZURE_AD_CLIENT_ID` in `backend/.env` to match `VITE_AZURE_AD_TENANT_ID`/`VITE_AZURE_AD_CLIENT_ID` in `frontend/.env` (step 3), and your browser to allow the Microsoft sign-in popup (Chrome silently blocks it on some sites — check the address bar for a blocked-popup icon if the button seems to do nothing).
 
-Signing in via "Log in with University AD" doesn't need a seeded user — `POST /api/auth/login/ad` upserts a `STUDENT` user from the validated Azure AD token automatically. That flow needs `AZURE_AD_TENANT_ID`/`AZURE_AD_CLIENT_ID` in `backend/.env` to match `VITE_AZURE_AD_TENANT_ID`/`VITE_AZURE_AD_CLIENT_ID` in `frontend/.env`, and your browser to allow the Microsoft sign-in popup (Chrome silently blocks it on some sites — check the address bar for a blocked-popup icon if the button seems to do nothing).
-
-### Frontend
+### 3. Frontend
 
 ```bash
 cd frontend
 cp .env.example .env
 npm install
-npm run dev
+npm run dev              # :5173
 ```
 
-### Full stack locally via Docker Compose
+### Optional: full stack via Docker Compose
 
-Not needed for regular dev (use `npm run dev` above); this reproduces the VPS's build for testing the Docker images themselves, built with the `/project` base path (see the Architecture note above for why browsing it directly at `http://localhost:8081/` doesn't work without a path-stripping proxy in front):
+Not needed for regular dev (steps 1–3 above cover that); this instead builds and runs the same Docker images the VPS deploys, for testing the images themselves:
 
 ```bash
 cp docker/.env.example docker/.env   # compose reads .env from the same dir as the compose file, not the repo root
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment:` in `docker-compose.yml`) to point at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL` targets `localhost`, which is only correct for a host-run backend, not the containerized one.
+- The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment:` in `docker-compose.yml`) to point at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL` targets `localhost`, which is only correct for a host-run backend, not the containerized one.
+- This build uses the `/project` base path (see the Architecture note above) — browsing it directly at `http://localhost:8081/` won't work without a path-stripping proxy in front, same as the VPS.
 
 ## Peer API integration
 
