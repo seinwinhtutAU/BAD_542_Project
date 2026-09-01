@@ -7,6 +7,8 @@ services:
       MYSQL_USER: campus_health
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 
@@ -17,6 +19,10 @@ services:
     restart: unless-stopped
     env_file:
       - ../backend/.env
+    environment:
+      # Overrides backend/.env's DATABASE_URL (which targets localhost for host-run dev)
+      # with the in-network mysql service hostname, since this container isn't localhost.
+      DATABASE_URL: mysql://campus_health:${MYSQL_PASSWORD}@mysql:3306/campus_health
     depends_on:
       - mysql
     ports:

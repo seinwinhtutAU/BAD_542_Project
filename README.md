@@ -15,11 +15,20 @@ Users -> Nginx (HTTPS, /project path) -> React frontend
                                                                 -> Peer team API (alerts)
 ```
 
+The frontend's production build is served under the `/project` path (`VITE_BASE_PATH`), matching the VPS's reverse proxy. If you build the Docker frontend image and hit it directly (no proxy in front, e.g. `http://localhost:8081/`), load it at `http://localhost:8081/project/` instead — the app is a blank page at the bare root because React Router's basename won't match `/`.
+
 ## Setup
 
-### Local MySQL database
+### Database
 
-`backend/.env.example`'s `DATABASE_URL` is a placeholder — create a real database and user before running migrations. `prisma migrate dev` also needs a "shadow database" to diff against, so the user needs privileges to create databases, not just access `campus_health`:
+The easiest path is Docker Compose's `mysql` service, since its credentials already match `backend/.env`:
+
+```bash
+cp docker/.env.example docker/.env   # set MYSQL_PASSWORD / MYSQL_ROOT_PASSWORD
+docker compose -f docker/docker-compose.yml up -d mysql   # publishes 3306 to localhost
+```
+
+Alternatively, use a MySQL install of your own. `prisma migrate dev` needs a "shadow database" to diff against, so the user needs privileges to create databases, not just access `campus_health`:
 
 ```bash
 mysql -u root <<'EOF'
@@ -30,7 +39,7 @@ FLUSH PRIVILEGES;
 EOF
 ```
 
-Then set `backend/.env`:
+Either way, `backend/.env`'s `DATABASE_URL` should end up as:
 
 ```
 DATABASE_URL="mysql://campus_health:campus_health_dev@localhost:3306/campus_health"
@@ -38,17 +47,39 @@ DATABASE_URL="mysql://campus_health:campus_health_dev@localhost:3306/campus_heal
 
 (Use a real password and narrower grants for anything beyond local dev.)
 
-Backend:
+### Backend
 
 ```bash
 cd backend
-cp .env.example .env   # then edit DATABASE_URL as above
+cp .env.example .env   # then edit DATABASE_URL as above, and AZURE_AD_* to match the frontend
 npm install
 npx prisma migrate dev
 npm run dev
 ```
 
-Frontend:
+There is no seed script, so a fresh database has no users — the dev-login form (`/api/auth/login/dev`) has nothing to authenticate against until you create one. Create a local test account with:
+
+```bash
+node -e "
+const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+(async () => {
+  const password = await bcrypt.hash('admin123', 10);
+  const user = await prisma.user.upsert({
+    where: { email: 'admin@test.com' },
+    update: {},
+    create: { email: 'admin@test.com', name: 'Admin', password, role: 'ADMIN' },
+  });
+  console.log(user);
+  await prisma.\$disconnect();
+})();
+"
+```
+
+Signing in via "Log in with University AD" doesn't need a seeded user — `POST /api/auth/login/ad` upserts a `STUDENT` user from the validated Azure AD token automatically. That flow needs `AZURE_AD_TENANT_ID`/`AZURE_AD_CLIENT_ID` in `backend/.env` to match `VITE_AZURE_AD_TENANT_ID`/`VITE_AZURE_AD_CLIENT_ID` in `frontend/.env`, and your browser to allow the Microsoft sign-in popup (Chrome silently blocks it on some sites — check the address bar for a blocked-popup icon if the button seems to do nothing).
+
+### Frontend
 
 ```bash
 cd frontend
@@ -57,12 +88,14 @@ npm install
 npm run dev
 ```
 
-Full stack locally via Docker Compose:
+### Full stack locally via Docker Compose
 
 ```bash
 cp docker/.env.example docker/.env   # compose reads .env from the same dir as the compose file, not the repo root
 docker compose -f docker/docker-compose.yml up --build
 ```
+
+The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment:` in `docker-compose.yml`) to point at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL` targets `localhost`, which is only correct for a host-run backend, not the containerized one.
 
 ## Peer API integration
 
