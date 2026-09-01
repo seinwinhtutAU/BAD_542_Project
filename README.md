@@ -15,7 +15,7 @@ Users -> Nginx (HTTPS, /project path) -> React frontend
                                                                 -> Peer team API (alerts)
 ```
 
-The frontend's production build is served under the `/project` path (`VITE_BASE_PATH`), matching the VPS's outer nginx, which also proxies `/project/api/` straight to the backend and strips the prefix before forwarding `/project/` itself to the frontend container. Hitting the Docker frontend image directly with no such proxy in front (e.g. `http://localhost:8081/`) doesn't work around this — the built asset URLs and API calls are baked in at `/project/...`, which don't exist at that path inside the container, so you get a blank page or a "text/html instead of a JS module" console error. Use `docker/docker-compose.local.yml` (see below) to build a root-path variant for standalone local testing instead of fighting the `/project/` prefix.
+The frontend's production build is served under the `/project` path (`VITE_BASE_PATH`), matching the VPS's outer nginx, which also proxies `/project/api/` straight to the backend and strips the prefix before forwarding `/project/` itself to the frontend container. Hitting the Docker frontend image directly with no such proxy in front (e.g. `http://localhost:8081/`) doesn't work around this — the built asset URLs and API calls are baked in at `/project/...`, which don't exist at that path inside the container, so you get a blank page or a "text/html instead of a JS module" console error. Day-to-day local dev doesn't hit this at all — use `npm run dev` for both frontend and backend (see Setup below).
 
 ## Setup
 
@@ -90,7 +90,7 @@ npm run dev
 
 ### Full stack locally via Docker Compose
 
-To reproduce the VPS setup as closely as possible (built with the `/project` base path — see the Architecture note above for why you still need a path-stripping proxy in front to browse it):
+Not needed for regular dev (use `npm run dev` above); this reproduces the VPS's build for testing the Docker images themselves, built with the `/project` base path (see the Architecture note above for why browsing it directly at `http://localhost:8081/` doesn't work without a path-stripping proxy in front):
 
 ```bash
 cp docker/.env.example docker/.env   # compose reads .env from the same dir as the compose file, not the repo root
@@ -98,14 +98,6 @@ docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment:` in `docker-compose.yml`) to point at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL` targets `localhost`, which is only correct for a host-run backend, not the containerized one.
-
-To instead browse the stack directly at `http://localhost:8081/` (no reverse proxy, no `/project/` prefix), layer on the local override, which rebuilds the frontend with a root base path and points it at the backend directly:
-
-```bash
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d --build
-```
-
-AD login through this path additionally needs `http://localhost:8081/` registered as a redirect URI (platform type: Single-page application) on the Azure AD app registration, alongside the VPS's URI.
 
 ## Peer API integration
 
