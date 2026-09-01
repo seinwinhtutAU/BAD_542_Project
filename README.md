@@ -4,6 +4,38 @@ Web application for students to book appointments with university doctors, authe
 
 See [docs/req.md](docs/req.md) and [docs/Design_Document_Campus_Health_Appointment_System.pdf](docs/Design_Document_Campus_Health_Appointment_System.pdf) for the full requirements and design.
 
+## Quick start
+
+Gets you logged in at `http://localhost:5173` with a dev-login test account. No Azure AD setup needed for this path — see [Setup](#setup) below for AD login, MySQL alternatives, and the Docker Compose / VPS deploy details this glosses over.
+
+```bash
+# 1. Database (Docker)
+cp docker/.env.example docker/.env
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql
+
+# 2. Backend
+cd backend && cp .env.example .env
+npm install && npx prisma migrate dev
+npm run dev &   # keep this running; :4000
+
+# 3. Create a test account (fresh DB has no users)
+node -e "
+const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+new PrismaClient().user.upsert({
+  where: { email: 'admin@test.com' },
+  update: {},
+  create: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN', password: bcrypt.hashSync('admin123', 10) },
+}).then(console.log);
+"
+
+# 4. Frontend
+cd ../frontend && cp .env.example .env
+npm install && npm run dev   # :5173
+```
+
+Log in at `http://localhost:5173` with `admin@test.com` / `admin123`.
+
 ## Architecture
 
 ```
