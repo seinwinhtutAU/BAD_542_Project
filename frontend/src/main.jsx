@@ -3,34 +3,37 @@ import ReactDOM from 'react-dom/client';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
 import App from './App';
+import apiClient from './services/apiClient';
 import { msalConfig } from './authConfig';
 import './index.css';
 
 /**
- * Microsoft returns the sign-in result as a URL hash (#code=...) on the popup's
- * redirect page. Our redirect URI is the app root, so React Router would boot,
- * find no route for "/", and immediately Navigate to /login — replacing the URL
- * and discarding that hash before MSAL can read it. MSAL then reports
- * "hash_empty_error".
+ * We sign in with a full-page redirect rather than a popup.
  *
- * When the hash is an auth response, render nothing and leave the URL alone.
- * The window that opened this popup reads the hash from it and closes it.
+ * The popup flow reads the "#code=..." fragment by polling the popup's URL, and
+ * that proved unreliable here — MSAL kept reporting hash_empty_error on the
+ * deployed site. The redirect flow hands the fragment to MSAL through
+ * handleRedirectPromise() instead, which is why it is called below *before*
+ * anything renders: React Router would otherwise navigate away from "/" and
+ * discard the fragment first. It also sidesteps popup blockers, which the
+ * README already warned about.
  */
-function isAuthResponseWindow() {
-  return /[#&](code|error|id_token|access_token|state)=/.test(window.location.hash);
+async function completeAdSignIn(msalInstance) {
+  const result = await msalInstance.handleRedirectPromise();
+  if (!result?.idToken) return;
+
+  const { data } = await apiClient.post('/api/auth/login/ad', { adToken: result.idToken });
+  localStorage.setItem('token', data.token);
 }
 
 async function bootstrap() {
-  if (isAuthResponseWindow()) {
-    return;
-  }
-
   let msalInstance = null;
   try {
     msalInstance = new PublicClientApplication(msalConfig);
     await msalInstance.initialize();
+    await completeAdSignIn(msalInstance);
   } catch (err) {
-    console.warn('MSAL initialization warning:', err);
+    console.error('Microsoft sign-in could not be completed:', err);
   }
 
   const root = ReactDOM.createRoot(document.getElementById('root'));

@@ -11,7 +11,7 @@ const ROLE_REDIRECT = {
 };
 
 export default function LoginPage() {
-  const { loginDev, loginWithAd, user } = useAuth();
+  const { loginDev, user } = useAuth();
   const msal = useMsal();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -56,8 +56,9 @@ export default function LoginPage() {
       if (!msal || !msal.instance) {
         throw new Error('MSAL instance is unavailable');
       }
-      const result = await msal.instance.loginPopup(loginRequest);
-      await loginWithAd(result.idToken);
+      // Full-page redirect. The browser leaves this page and comes back
+      // signed in; main.jsx completes the exchange before the app renders.
+      await msal.instance.loginRedirect(loginRequest);
     } catch (err) {
       console.error('AD Login Error:', err);
       setError(err.message || 'Microsoft Azure AD sign-in was cancelled or failed.');
