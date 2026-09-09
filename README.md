@@ -133,10 +133,11 @@ The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment
 
 ## Peer API integration
 
-- **Consuming**: `GET {PEER_API_BASE_URL}/api/alerts` with header `x-api-key: PEER_API_KEY_OUTBOUND` — fetches active campus emergency alerts before confirming an appointment.
-- **Exposing**: `GET /api/appointments?date=YYYY-MM-DD` with header `x-api-key` (one of `PEER_API_KEYS_INBOUND`) — lets the peer's Campus Emergency & Safety Alert System pull our appointment schedule for a given day.
+- **Consuming**: `GET {PEER_API_BASE_URL}/api/alerts` with header `x-api-key: PEER_API_KEY_OUTBOUND` — fetches active campus emergency alerts before confirming an appointment. A `CRITICAL` alert makes `POST /api/appointments` return 409 and pauses new bookings.
 
-Classmate/team name and the actual API key exchange to be filled in once assigned.
+This system currently exposes no endpoint back to the peer team; the previous
+`x-api-key`-protected appointments feed was removed. Classmate/team name and the
+API key exchange to be filled in once assigned.
 
 ## Roles (RBAC)
 

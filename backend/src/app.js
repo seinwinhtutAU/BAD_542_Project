@@ -5,7 +5,6 @@ const userRoutes = require('./routes/user.routes');
 const doctorRoutes = require('./routes/doctor.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
 const prescriptionRoutes = require('./routes/prescription.routes');
-const externalRoutes = require('./routes/external.routes');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -20,7 +19,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
-app.use('/api', externalRoutes);
 
 app.use(errorHandler);
 

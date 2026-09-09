@@ -19,9 +19,13 @@ async function createDoctor(req, res, next) {
 
 async function updateDoctor(req, res, next) {
   try {
+    // Only these three columns are client-editable; passing req.body straight
+    // through would let a caller set any column, including the primary key.
+    const { name, specialty, room } = req.body;
+
     const doctor = await prisma.doctor.update({
       where: { id: Number(req.params.id) },
-      data: req.body,
+      data: { name, specialty, room },
     });
     res.json(doctor);
   } catch (err) {
@@ -31,7 +35,24 @@ async function updateDoctor(req, res, next) {
 
 async function deleteDoctor(req, res, next) {
   try {
-    await prisma.doctor.delete({ where: { id: Number(req.params.id) } });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: 'A numeric doctor id is required' });
+    }
+
+    const appointmentCount = await prisma.appointment.count({ where: { doctorId: id } });
+    if (appointmentCount > 0) {
+      return res.status(409).json({
+        error: `This doctor has ${appointmentCount} appointment(s) and cannot be deleted. Cancel or reassign them first.`,
+      });
+    }
+
+    const doctor = await prisma.doctor.findUnique({ where: { id } });
+    if (!doctor) {
+      return res.status(404).json({ error: 'Doctor not found' });
+    }
+
+    await prisma.doctor.delete({ where: { id } });
     res.status(204).end();
   } catch (err) {
     next(err);

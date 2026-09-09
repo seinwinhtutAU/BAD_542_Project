@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../config/prisma');
 const config = require('../config');
 const { validateAdToken } = require('../services/azureAd.service');
+const { publicUserSelect, toPublicUser } = require('../utils/user');
 
 function issueToken(user) {
   return jwt.sign({ sub: user.id, role: user.role, email: user.email }, config.jwtSecret, {
@@ -21,6 +22,7 @@ async function loginWithAd(req, res, next) {
       create: {
         email: profile.email, adId: profile.adId, name: profile.name, role: 'STUDENT',
       },
+      select: publicUserSelect,
     });
 
     res.json({ token: issueToken(user), user });
@@ -38,7 +40,7 @@ async function loginDev(req, res, next) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    res.json({ token: issueToken(user), user });
+    res.json({ token: issueToken(user), user: toPublicUser(user) });
   } catch (err) {
     next(err);
   }
@@ -46,7 +48,10 @@ async function loginDev(req, res, next) {
 
 async function me(req, res, next) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.sub } });
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.sub },
+      select: publicUserSelect,
+    });
     res.json({ user });
   } catch (err) {
     next(err);

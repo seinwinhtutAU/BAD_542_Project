@@ -1,5 +1,8 @@
 const prisma = require('../config/prisma');
 const { createAppointment } = require('../services/appointment.service');
+const { publicUserSelect } = require('../utils/user');
+
+const STATUSES = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
 
 async function create(req, res, next) {
   try {
@@ -31,7 +34,7 @@ async function listMine(req, res, next) {
 async function listAll(req, res, next) {
   try {
     const appointments = await prisma.appointment.findMany({
-      include: { student: true, doctor: true, prescription: true },
+      include: { student: { select: publicUserSelect }, doctor: true, prescription: true },
       orderBy: { appointmentDate: 'desc' },
     });
     res.json(appointments);
@@ -42,9 +45,24 @@ async function listAll(req, res, next) {
 
 async function updateStatus(req, res, next) {
   try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: 'A numeric appointment id is required' });
+    }
+
+    const { status } = req.body;
+    if (!STATUSES.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${STATUSES.join(', ')}` });
+    }
+
+    const existing = await prisma.appointment.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
     const appointment = await prisma.appointment.update({
-      where: { id: Number(req.params.id) },
-      data: { status: req.body.status },
+      where: { id },
+      data: { status },
     });
     res.json(appointment);
   } catch (err) {
