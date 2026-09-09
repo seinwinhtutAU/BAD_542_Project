@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
+const config = require('../config');
 
 const tenantId = process.env.AZURE_AD_TENANT_ID;
 const clientId = process.env.AZURE_AD_CLIENT_ID;
@@ -41,10 +42,20 @@ async function validateAdToken(adToken) {
     throw Object.assign(new Error('Azure AD token missing email claim'), { status: 401 });
   }
 
+  const email = (payload.email || payload.preferred_username).toLowerCase();
+  const domain = email.split('@').pop();
+
+  if (!config.allowedEmailDomains.includes(domain)) {
+    throw Object.assign(
+      new Error(`Only university accounts may sign in. ${email} is not on an allowed domain.`),
+      { status: 403 },
+    );
+  }
+
   return {
     adId: payload.oid || payload.sub,
-    email: payload.email || payload.preferred_username,
-    name: payload.name || payload.email,
+    email,
+    name: payload.name || email,
   };
 }
 

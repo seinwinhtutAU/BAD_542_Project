@@ -16,14 +16,26 @@ async function loginWithAd(req, res, next) {
     const { adToken } = req.body;
     const profile = await validateAdToken(adToken);
 
-    const user = await prisma.user.upsert({
-      where: { email: profile.email },
-      update: { adId: profile.adId, name: profile.name },
-      create: {
-        email: profile.email, adId: profile.adId, name: profile.name, role: 'STUDENT',
-      },
-      select: publicUserSelect,
+    // Match on adId first: it is the stable Azure object id. Matching only on
+    // email meant that if someone's university address changed, the upsert
+    // tried to create a second row carrying their existing (unique) adId,
+    // failed the constraint, and locked them out permanently.
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ adId: profile.adId }, { email: profile.email }] },
     });
+
+    const user = existing
+      ? await prisma.user.update({
+        where: { id: existing.id },
+        data: { adId: profile.adId, email: profile.email, name: profile.name },
+        select: publicUserSelect,
+      })
+      : await prisma.user.create({
+        data: {
+          email: profile.email, adId: profile.adId, name: profile.name, role: 'STUDENT',
+        },
+        select: publicUserSelect,
+      });
 
     res.json({ token: issueToken(user), user });
   } catch (err) {
