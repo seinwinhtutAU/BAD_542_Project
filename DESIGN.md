@@ -56,6 +56,11 @@ Primitive: **sidebar-main**.
 - 2026-09-09 — phase 2: tab strips replaced by the sidebar-main shell; inline styles moved into
   the stylesheet; spacing scale introduced; stat walls removed from the student and doctor pages
   in favour of a single context line; tables reflow to cards on phones.
+- 2026-09-09 — phase 3: appointment detail pages for students and doctors; a status timeline so
+  "PENDING" explains itself; a print stylesheet that renders a prescription slip and hides the
+  dark shell; the free datetime field replaced by a slot picker fed by a new
+  `GET /api/doctors/:id/slots` endpoint, with a unique index on (doctorId, appointmentDate)
+  making double-booking impossible even under a race.
 
 ## Components
 
@@ -69,6 +74,9 @@ Primitive: **sidebar-main**.
 | `Modal` | `components/Modal.jsx` | Escape to close, scroll lock, overlay click. |
 | `Toast` | `components/Toast.jsx` | Rendered by `ToastProvider`; raise with `useToast()`. |
 | `AlertBanner` | `components/AlertBanner.jsx` | Campus emergency alert from the peer API. |
+| `StatusTimeline` | `components/StatusTimeline.jsx` | Booked → Confirmed → Completed; cancelled shown off-path. |
+| `PrescriptionSlip` | `components/PrescriptionSlip.jsx` | Print-only slip; hidden on screen, revealed by `@media print`. |
+| `SlotPicker` | `features/appointments/SlotPicker.jsx` | Date plus the doctor's free 30-minute slots. |
 
 ## Non-Goals
 

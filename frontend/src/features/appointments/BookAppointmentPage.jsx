@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../services/apiClient';
 import AlertBanner from '../../components/AlertBanner';
+import SlotPicker from './SlotPicker';
 import { useToast } from '../../context/ToastContext';
 import { useStudentData } from './StudentLayout';
 
@@ -17,12 +18,7 @@ export default function BookAppointmentPage() {
   async function handleBook(e) {
     e.preventDefault();
     if (!form.doctorId || !form.appointmentDate) {
-      showToast('Please select a doctor and appointment date & time.', 'error');
-      return;
-    }
-
-    if (new Date(form.appointmentDate).getTime() < Date.now()) {
-      showToast('Appointment date & time must be in the future.', 'error');
+      showToast('Please choose a doctor and one of their available times.', 'error');
       return;
     }
 
@@ -44,8 +40,6 @@ export default function BookAppointmentPage() {
     }
   }
 
-  const nowString = new Date(Date.now() + 60000).toISOString().slice(0, 16);
-
   return (
     <>
       {activeAlert && (
@@ -66,7 +60,7 @@ export default function BookAppointmentPage() {
                 id="doctor-select"
                 className="select"
                 value={form.doctorId}
-                onChange={(e) => setForm({ ...form, doctorId: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, doctorId: e.target.value, appointmentDate: '' }))}
                 required
               >
                 <option value="">Choose a university physician...</option>
@@ -78,21 +72,11 @@ export default function BookAppointmentPage() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="appointment-date">Preferred Date &amp; Time *</label>
-              <input
-                id="appointment-date"
-                className="input"
-                type="datetime-local"
-                min={nowString}
-                value={form.appointmentDate}
-                onChange={(e) => setForm({ ...form, appointmentDate: e.target.value })}
-                required
-              />
-              <small className="field-hint">
-                Clinic operating hours: Monday – Friday, 08:30 AM – 05:00 PM
-              </small>
-            </div>
+            <SlotPicker
+              doctorId={form.doctorId}
+              value={form.appointmentDate}
+              onChange={(startsAt) => setForm((prev) => ({ ...prev, appointmentDate: startsAt }))}
+            />
 
             <div className="form-group">
               <label className="form-label" htmlFor="symptoms-input">Symptoms &amp; Medical Notes</label>
@@ -101,7 +85,7 @@ export default function BookAppointmentPage() {
                 className="textarea"
                 placeholder="Describe what you are experiencing (e.g., headache, fever, sore throat for 3 days)..."
                 value={form.symptoms}
-                onChange={(e) => setForm({ ...form, symptoms: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, symptoms: e.target.value }))}
                 rows="4"
               />
               <div className="ai-summary-box">
@@ -134,7 +118,7 @@ export default function BookAppointmentPage() {
                     type="button"
                     className={`pick-card ${form.doctorId === String(d.id) ? 'selected' : ''}`}
                     aria-pressed={form.doctorId === String(d.id)}
-                    onClick={() => setForm({ ...form, doctorId: String(d.id) })}
+                    onClick={() => setForm((prev) => ({ ...prev, doctorId: String(d.id), appointmentDate: '' }))}
                   >
                     <div className="pick-card-name">Dr. {d.name}</div>
                     <div className="pick-card-specialty">{d.specialty}</div>

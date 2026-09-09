@@ -99,6 +99,9 @@ export default function MyAppointmentsPage() {
 
                   <div className="row">
                     <span className={`badge ${STATUS_CLASS[a.status] || 'badge-pending'}`}>{a.status}</span>
+                    <Link className="btn btn-secondary btn-sm" to={`/student/appointments/${a.id}`}>
+                      Details
+                    </Link>
                     {a.status === 'PENDING' && (
                       <button type="button" className="btn btn-danger btn-sm" onClick={() => setCancelModalId(a.id)}>
                         Cancel

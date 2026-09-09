@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import apiClient from '../../services/apiClient';
 import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
@@ -159,6 +160,10 @@ export default function DoctorQueuePage() {
 
                   <div className="row">
                     <span className={`badge ${statusClass}`}>{a.status}</span>
+
+                    <Link className="btn btn-secondary btn-sm" to={`/doctor/appointments/${a.id}`}>
+                      Open
+                    </Link>
 
                     {a.status === 'PENDING' && (
                       <button type="button" className="btn btn-teal btn-sm" onClick={() => updateStatus(a.id, 'CONFIRMED')}>

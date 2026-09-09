@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { getDoctorDaySlots } = require('../services/schedule.service');
 
 async function listDoctors(req, res, next) {
   try {
@@ -59,6 +60,30 @@ async function deleteDoctor(req, res, next) {
   }
 }
 
+/** The day's consultation slots for one doctor, each marked free or taken. */
+async function listDoctorSlots(req, res, next) {
+  try {
+    const doctorId = Number(req.params.id);
+    if (!Number.isInteger(doctorId)) {
+      return res.status(400).json({ error: 'A numeric doctor id is required' });
+    }
+
+    const { date } = req.query;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
+      return res.status(400).json({ error: 'A date query param of the form YYYY-MM-DD is required' });
+    }
+
+    const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
+    if (!doctor) {
+      return res.status(404).json({ error: 'Doctor not found' });
+    }
+
+    res.json({ date, slots: await getDoctorDaySlots(doctorId, date) });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
-  listDoctors, createDoctor, updateDoctor, deleteDoctor,
+  listDoctors, listDoctorSlots, createDoctor, updateDoctor, deleteDoctor,
 };

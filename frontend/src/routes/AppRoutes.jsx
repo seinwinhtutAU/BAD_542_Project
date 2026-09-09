@@ -6,9 +6,11 @@ import StudentLayout from '../features/appointments/StudentLayout';
 import BookAppointmentPage from '../features/appointments/BookAppointmentPage';
 import MyAppointmentsPage from '../features/appointments/MyAppointmentsPage';
 import MyPrescriptionsPage from '../features/appointments/MyPrescriptionsPage';
+import AppointmentDetailPage from '../features/appointments/AppointmentDetailPage';
 
 import DoctorLayout from '../features/doctor/DoctorLayout';
 import DoctorQueuePage from '../features/doctor/DoctorQueuePage';
+import DoctorAppointmentDetailPage from '../features/doctor/DoctorAppointmentDetailPage';
 
 import AdminLayout from '../features/admin/AdminLayout';
 import UsersPage from '../features/admin/UsersPage';
@@ -32,6 +34,7 @@ export default function AppRoutes() {
         <Route index element={<Navigate to="book" replace />} />
         <Route path="book" element={<BookAppointmentPage />} />
         <Route path="appointments" element={<MyAppointmentsPage />} />
+        <Route path="appointments/:id" element={<AppointmentDetailPage />} />
         <Route path="prescriptions" element={<MyPrescriptionsPage />} />
       </Route>
 
@@ -41,6 +44,7 @@ export default function AppRoutes() {
       >
         <Route index element={<Navigate to="queue" replace />} />
         <Route path="queue" element={<DoctorQueuePage />} />
+        <Route path="appointments/:id" element={<DoctorAppointmentDetailPage />} />
       </Route>
 
       <Route

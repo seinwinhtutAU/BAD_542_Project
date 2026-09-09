@@ -51,6 +51,11 @@ model Appointment {
   student      User          @relation(fields: [studentId], references: [id])
   doctor       Doctor        @relation(fields: [doctorId], references: [id])
   prescription Prescription?
+
+  // A doctor cannot be in two consultations at once. Enforced here as well as
+  // in the booking service, so a race between two students still can't create
+  // a double booking.
+  @@unique([doctorId, appointmentDate])
 }
 
 model Prescription {
