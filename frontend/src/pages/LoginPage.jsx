@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
 import { useAuth } from '../context/AuthContext';
-import { loginRequest, isAdConfigured } from '../authConfig';
+import { loginRequest, isAdConfigured, AD_ERROR_KEY } from '../authConfig';
 
 const ROLE_REDIRECT = {
   STUDENT: '/student',
@@ -17,6 +17,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  // A failed redirect sign-in leaves its reason here on the way back.
+  useEffect(() => {
+    const stored = sessionStorage.getItem(AD_ERROR_KEY);
+    if (stored) {
+      setError(stored);
+      sessionStorage.removeItem(AD_ERROR_KEY);
+    }
+  }, []);
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 

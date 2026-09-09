@@ -15,6 +15,9 @@ export const msalConfig = {
   },
 };
 
+/** Where a failed redirect sign-in leaves its reason for the login page. */
+export const AD_ERROR_KEY = 'adSignInError';
+
 export const loginRequest = {
   scopes: ['openid', 'profile', 'email'],
 };

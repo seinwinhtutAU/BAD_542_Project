@@ -4,7 +4,7 @@ import { PublicClientApplication } from '@azure/msal-browser';
 import { MsalProvider } from '@azure/msal-react';
 import App from './App';
 import apiClient from './services/apiClient';
-import { msalConfig } from './authConfig';
+import { msalConfig, AD_ERROR_KEY } from './authConfig';
 import './index.css';
 
 /**
@@ -22,8 +22,18 @@ async function completeAdSignIn(msalInstance) {
   const result = await msalInstance.handleRedirectPromise();
   if (!result?.idToken) return;
 
-  const { data } = await apiClient.post('/api/auth/login/ad', { adToken: result.idToken });
-  localStorage.setItem('token', data.token);
+  try {
+    const { data } = await apiClient.post('/api/auth/login/ad', { adToken: result.idToken });
+    localStorage.setItem('token', data.token);
+  } catch (err) {
+    // The backend refuses accounts outside the allowed domains. Without this
+    // the redirect just dumps the person back on the login page with no idea
+    // why, because there is no popup left to report into.
+    sessionStorage.setItem(
+      AD_ERROR_KEY,
+      err.response?.data?.error || 'Microsoft sign-in could not be completed.',
+    );
+  }
 }
 
 async function bootstrap() {
@@ -34,6 +44,7 @@ async function bootstrap() {
     await completeAdSignIn(msalInstance);
   } catch (err) {
     console.error('Microsoft sign-in could not be completed:', err);
+    sessionStorage.setItem(AD_ERROR_KEY, err.message || 'Microsoft sign-in could not be completed.');
   }
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
