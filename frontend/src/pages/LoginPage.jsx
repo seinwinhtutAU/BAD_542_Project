@@ -91,16 +91,16 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="alert-banner" className="login-notice" role="alert">
-            <div className="alert-banner-content" className="text-sm">
+          <div className="alert-banner login-notice" role="alert">
+            <div className="alert-banner-content text-sm">
               <span>{error}</span>
             </div>
           </div>
         )}
 
         {notice && (
-          <div className="alert-banner alert-banner-info" className="login-notice">
-            <div className="alert-banner-content" className="text-sm">
+          <div className="alert-banner alert-banner-info login-notice">
+            <div className="alert-banner-content text-sm">
               <span>{notice}</span>
             </div>
           </div>
@@ -108,10 +108,9 @@ export default function LoginPage() {
 
         <button
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-secondary btn-ad"
           onClick={handleAdLogin}
           disabled={loading}
-          className="btn-ad"
         >
           <svg width="18" height="18" viewBox="0 0 23 23">
             <path fill="#f35325" d="M1 1h10v10H1z"/>
@@ -121,9 +120,9 @@ export default function LoginPage() {
           </svg>
           <span>Log in with University AD</span>
           {isAdConfigured ? (
-            <span className="badge badge-confirmed" className="badge-trailing">Active</span>
+            <span className="badge badge-confirmed badge-trailing">Active</span>
           ) : (
-            <span className="badge" className="badge-trailing badge-local">Dev</span>
+            <span className="badge badge-trailing badge-local">Dev</span>
           )}
         </button>
 
@@ -160,8 +159,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="btn btn-primary"
-            className="btn-submit"
+            className="btn btn-primary btn-submit"
             disabled={loading}
           >
             {loading ? 'Authenticating...' : 'Sign In'}
