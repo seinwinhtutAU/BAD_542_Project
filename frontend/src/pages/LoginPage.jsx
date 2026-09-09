@@ -85,22 +85,22 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1>Campus Health Portal</h1>
-          <p style={{ marginTop: '0.35rem', fontSize: '0.875rem' }}>
+          <p className="login-subtitle">
             Book appointments, manage prescriptions & healthcare services
           </p>
         </div>
 
         {error && (
-          <div className="alert-banner" style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem' }} role="alert">
-            <div className="alert-banner-content" style={{ fontSize: '0.825rem' }}>
+          <div className="alert-banner" className="login-notice" role="alert">
+            <div className="alert-banner-content" className="text-sm">
               <span>{error}</span>
             </div>
           </div>
         )}
 
         {notice && (
-          <div className="alert-banner alert-banner-info" style={{ marginBottom: '1.25rem', padding: '0.75rem 1rem' }}>
-            <div className="alert-banner-content" style={{ fontSize: '0.825rem' }}>
+          <div className="alert-banner alert-banner-info" className="login-notice">
+            <div className="alert-banner-content" className="text-sm">
               <span>{notice}</span>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function LoginPage() {
           className="btn btn-secondary"
           onClick={handleAdLogin}
           disabled={loading}
-          style={{ width: '100%', marginBottom: '0.5rem', display: 'flex', gap: '0.65rem' }}
+          className="btn-ad"
         >
           <svg width="18" height="18" viewBox="0 0 23 23">
             <path fill="#f35325" d="M1 1h10v10H1z"/>
@@ -121,9 +121,9 @@ export default function LoginPage() {
           </svg>
           <span>Log in with University AD</span>
           {isAdConfigured ? (
-            <span className="badge badge-confirmed" style={{ fontSize: '0.65rem', marginLeft: 'auto' }}>Active</span>
+            <span className="badge badge-confirmed" className="badge-trailing">Active</span>
           ) : (
-            <span className="badge" style={{ fontSize: '0.65rem', marginLeft: 'auto', background: 'rgba(148,163,184,0.2)', color: '#94a3b8' }}>Dev</span>
+            <span className="badge" className="badge-trailing badge-local">Dev</span>
           )}
         </button>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            className="btn-submit"
             disabled={loading}
           >
             {loading ? 'Authenticating...' : 'Sign In'}

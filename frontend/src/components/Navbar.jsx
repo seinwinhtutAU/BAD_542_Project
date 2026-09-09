@@ -35,7 +35,7 @@ export default function Navbar() {
               {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div>
-              <strong style={{ color: 'var(--text-primary)', marginRight: '6px' }}>{user.name}</strong>
+              <strong className="navbar-user-name">{user.name}</strong>
               <span className={`badge ${roleClass}`}>{user.role}</span>
             </div>
           </div>
