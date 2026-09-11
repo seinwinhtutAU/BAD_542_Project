@@ -4,6 +4,10 @@ import { useMsal } from '@azure/msal-react';
 import { useAuth } from '../context/AuthContext';
 import { loginRequest, isAdConfigured, AD_ERROR_KEY } from '../authConfig';
 
+// The email/password form and the quick-fill buttons are local testing aids.
+// A production build (`npm run build`) must offer University AD sign-in only.
+const showDevLogin = import.meta.env.DEV;
+
 const ROLE_REDIRECT = {
   STUDENT: '/student',
   DOCTOR: '/doctor',
@@ -55,7 +59,9 @@ export default function LoginPage() {
 
     if (!isAdConfigured) {
       setNotice(
-        'Azure AD is not configured for this environment (VITE_AZURE_AD_CLIENT_ID is empty). Use the Dev Login below to test.',
+        showDevLogin
+          ? 'Azure AD is not configured for this environment (VITE_AZURE_AD_CLIENT_ID is empty). Use the Dev Login below to test.'
+          : 'Azure AD is not configured for this deployment. Contact the administrator.',
       );
       return;
     }
@@ -94,7 +100,7 @@ export default function LoginPage() {
               <path d="M9 12h6"/>
             </svg>
           </div>
-          <h1>Campus Health Portal</h1>
+          <h1>Campus Health</h1>
           <p className="login-subtitle">
             Book appointments, manage prescriptions & healthcare services
           </p>
@@ -136,72 +142,76 @@ export default function LoginPage() {
           )}
         </button>
 
-        <div className="login-divider">Or continue with email</div>
+        {showDevLogin && (
+          <>
+            <div className="login-divider">Or continue with email</div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="email-input">University Email</label>
-            <input
-              id="email-input"
-              className="input"
-              type="email"
-              placeholder="user@university.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="email-input">University Email</label>
+                <input
+                  id="email-input"
+                  className="input"
+                  type="email"
+                  placeholder="user@university.edu"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="password-input">Password</label>
-            <input
-              id="password-input"
-              className="input"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="password-input">Password</label>
+                <input
+                  id="password-input"
+                  className="input"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-submit"
-            disabled={loading}
-          >
-            {loading ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
+              <button
+                type="submit"
+                className="btn btn-primary btn-submit"
+                disabled={loading}
+              >
+                {loading ? 'Authenticating...' : 'Sign In'}
+              </button>
+            </form>
 
-        <div className="quick-accounts-section">
-          <div className="quick-accounts-title">Quick Dev Fill (Local Testing)</div>
-          <div className="quick-accounts-grid">
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => fillDevAccount('admin@au.edu', 'admin123')}
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => fillDevAccount('doctor@au.edu', 'doctor123')}
-            >
-              Doctor
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => fillDevAccount('student@au.edu', 'student123')}
-            >
-              Student
-            </button>
-          </div>
-        </div>
+            <div className="quick-accounts-section">
+              <div className="quick-accounts-title">Quick Dev Fill (Local Testing)</div>
+              <div className="quick-accounts-grid">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => fillDevAccount('admin@au.edu', 'admin123')}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => fillDevAccount('doctor@au.edu', 'doctor123')}
+                >
+                  Doctor
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => fillDevAccount('student@au.edu', 'student123')}
+                >
+                  Student
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
