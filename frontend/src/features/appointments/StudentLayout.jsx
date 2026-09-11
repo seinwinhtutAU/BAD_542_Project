@@ -75,7 +75,7 @@ function StudentLayoutInner() {
       ]}
     >
       <PageHeader
-        title="Student Health Portal"
+        title="Student"
         description="Book consultations with campus doctors, track appointments, and review your prescriptions."
       />
 

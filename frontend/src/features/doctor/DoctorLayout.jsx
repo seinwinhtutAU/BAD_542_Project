@@ -53,7 +53,7 @@ function DoctorLayoutInner() {
       ]}
     >
       <PageHeader
-        title="Doctor Clinical Portal"
+        title="Doctor"
         badge="Doctor Console"
         badgeClass="badge-doctor"
         description="Review incoming student appointments, analyze AI symptom summaries, and issue prescriptions."
