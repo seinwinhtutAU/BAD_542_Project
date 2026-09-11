@@ -20,4 +20,8 @@ export const AD_ERROR_KEY = 'adSignInError';
 
 export const loginRequest = {
   scopes: ['openid', 'profile', 'email'],
+  // Without this Microsoft silently reuses whichever account the browser is
+  // already signed into, which makes it impossible to move between a student,
+  // a doctor and an administrator on one machine. Ask every time instead.
+  prompt: 'select_account',
 };
