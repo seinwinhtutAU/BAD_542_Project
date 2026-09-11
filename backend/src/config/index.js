@@ -9,8 +9,6 @@ module.exports = {
     .split(',')
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean),
-  peerApiBaseUrl: process.env.PEER_API_BASE_URL,
-  peerApiKeyOutbound: process.env.PEER_API_KEY_OUTBOUND,
   deepseekApiKey: process.env.DEEPSEEK_API_KEY,
   deepseekApiBaseUrl: process.env.DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com',
 };

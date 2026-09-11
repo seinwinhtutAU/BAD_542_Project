@@ -2,18 +2,6 @@ import React from 'react';
 
 const PANELS = [
   {
-    key: 'peer',
-    mark: '⇄',
-    markClass: 'integration-icon-teal',
-    title: 'Peer Team API Integration',
-    subtitle: 'Campus Emergency & Safety Alert System',
-    blurb: 'Campus safety coordination during emergencies.',
-    detailLabel: 'Consuming',
-    detailLabelClass: 'detail-heading-sky',
-    code: 'GET {PEER_API}/api/alerts',
-    detail: 'With header x-api-key: PEER_API_KEY_OUTBOUND. A CRITICAL alert pauses new appointment bookings.',
-  },
-  {
     key: 'deepseek',
     mark: '✦',
     markClass: 'integration-icon-purple',
@@ -41,7 +29,7 @@ export default function IntegrationsPage() {
   return (
     <div className="card">
       <div className="card-header">
-        <h3>External &amp; Peer Integrations Architecture</h3>
+        <h3>External Integrations Architecture</h3>
         <span className="badge badge-student">Course Project Spec</span>
       </div>
 

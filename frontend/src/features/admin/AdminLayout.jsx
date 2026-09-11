@@ -66,7 +66,7 @@ function AdminLayoutInner() {
         title="Clinic Administration Hub"
         badge="Master Control"
         badgeClass="badge-admin"
-        description="Manage system identity accounts, clinical personnel, campus schedules, and peer integrations."
+        description="Manage system identity accounts, clinical personnel, campus schedules, and external integrations."
       />
 
       {/* Counts stay here: on the admin screens, counting is the job. */}

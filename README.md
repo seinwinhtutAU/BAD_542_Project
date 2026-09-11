@@ -1,6 +1,6 @@
 # Campus Health Appointment & Medicine Management System
 
-Web application for students to book appointments with university doctors, authenticated via the University's Microsoft Active Directory. Doctors manage appointments and prescriptions; administrators manage users, doctors, and schedules. Integrates with a peer team's Campus Emergency & Safety Alert System and uses DeepSeek to summarize reported symptoms for doctors.
+Web application for students to book appointments with university doctors, authenticated via the University's Microsoft Active Directory. Doctors manage appointments and prescriptions; administrators manage users, doctors, and schedules. Uses DeepSeek to summarize reported symptoms for doctors.
 
 See [docs/req.md](docs/req.md) and [docs/Design_Document_Campus_Health_Appointment_System.pdf](docs/Design_Document_Campus_Health_Appointment_System.pdf) for the full requirements and design.
 
@@ -44,7 +44,6 @@ Users -> Nginx (HTTPS, /project path) -> React frontend
                                                                 -> Azure AD (auth)
                                                                 -> Azure Key Vault (secrets)
                                                                 -> DeepSeek API (symptom summary)
-                                                                -> Peer team API (alerts)
 ```
 
 The frontend's production build is served under the `/project` path (`VITE_BASE_PATH`), matching the VPS's outer nginx, which also proxies `/project/api/` straight to the backend and strips the prefix before forwarding `/project/` itself to the frontend container. Hitting the Docker frontend image directly with no such proxy in front (e.g. `http://localhost:8081/`) doesn't work around this — the built asset URLs and API calls are baked in at `/project/...`, which don't exist at that path inside the container, so you get a blank page or a "text/html instead of a JS module" console error. Day-to-day local dev doesn't hit this at all — use `npm run dev` for both frontend and backend (see Setup below).
@@ -130,14 +129,6 @@ docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment:` in `docker-compose.yml`) to point at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL` targets `localhost`, which is only correct for a host-run backend, not the containerized one.
-
-## Peer API integration
-
-- **Consuming**: `GET {PEER_API_BASE_URL}/api/alerts` with header `x-api-key: PEER_API_KEY_OUTBOUND` — fetches active campus emergency alerts before confirming an appointment. A `CRITICAL` alert makes `POST /api/appointments` return 409 and pauses new bookings.
-
-This system currently exposes no endpoint back to the peer team; the previous
-`x-api-key`-protected appointments feed was removed. Classmate/team name and the
-API key exchange to be filled in once assigned.
 
 ## External AI Integration — DeepSeek
 

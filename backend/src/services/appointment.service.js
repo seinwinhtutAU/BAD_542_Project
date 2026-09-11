@@ -1,5 +1,4 @@
 const prisma = require('../config/prisma');
-const { getActiveAlerts } = require('./slAlerts.service');
 const { summarizeSymptoms } = require('./deepseek.service');
 const { isValidSlot } = require('./schedule.service');
 
@@ -37,12 +36,6 @@ async function createAppointment({
   const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
   if (!doctor) {
     throw Object.assign(new Error('Doctor not found'), { status: 404 });
-  }
-
-  const alerts = await getActiveAlerts();
-  const blockingAlert = alerts.find((a) => a.severity === 'CRITICAL');
-  if (blockingAlert) {
-    throw Object.assign(new Error(`New appointments are paused: ${blockingAlert.title}`), { status: 409 });
   }
 
   const analysis = symptoms?.trim() ? await summarizeSymptoms(symptoms) : null;
