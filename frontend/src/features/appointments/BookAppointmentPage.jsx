@@ -63,7 +63,7 @@ export default function BookAppointmentPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, doctorId: e.target.value, appointmentDate: '' }))}
                 required
               >
-                <option value="">Choose a university physician...</option>
+                <option value="">Choose a university doctor...</option>
                 {doctors.map((d) => (
                   <option key={d.id} value={d.id}>
                     {`Dr. ${d.name} — ${d.specialty} (Room ${d.room})`}
@@ -107,7 +107,7 @@ export default function BookAppointmentPage() {
 
         <div className="stack">
           <div className="card">
-            <h3>Available Physicians</h3>
+            <h3>Available Doctors</h3>
             {doctors.length === 0 ? (
               <p className="text-sm">No doctors currently listed. Check back shortly.</p>
             ) : (
@@ -127,16 +127,6 @@ export default function BookAppointmentPage() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="card info-card">
-            <h4>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              Emergency Safety Integration
-            </h4>
-            <p>
-              The campus clinic is integrated with the university Emergency Alert Network. If a severe campus alert is active, new appointments will automatically be rescheduled.
-            </p>
           </div>
         </div>
       </div>

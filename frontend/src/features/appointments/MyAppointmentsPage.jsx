@@ -64,7 +64,7 @@ export default function MyAppointmentsPage() {
           icon={<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
           title={statusFilter === 'ALL' ? 'No appointments yet' : `No ${statusFilter.toLowerCase()} appointments`}
           description={statusFilter === 'ALL'
-            ? 'Book a consultation with a campus physician and it will appear here.'
+            ? 'Book a consultation with a campus doctor and it will appear here.'
             : 'Try a different status filter, or book a new consultation.'}
           action={<Link className="btn btn-primary btn-sm" to="/student/book">Book an Appointment</Link>}
         />
@@ -79,7 +79,7 @@ export default function MyAppointmentsPage() {
                 <div className="appointment-header">
                   <div>
                     <div className="appointment-title">
-                      Dr. {a.doctor?.name || 'Assigned Physician'}
+                      Dr. {a.doctor?.name || 'Assigned Doctor'}
                       <span className="appointment-title-sub">
                         ({a.doctor?.specialty || 'General Practice'})
                       </span>

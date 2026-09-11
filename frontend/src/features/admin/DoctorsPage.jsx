@@ -69,7 +69,7 @@ export default function DoctorsPage() {
         <input
           type="text"
           className="input search-input"
-          placeholder="Search physician by name, specialty, room..."
+          placeholder="Search doctor by name, specialty, room..."
           value={doctorSearch}
           onChange={(e) => setDoctorSearch(e.target.value)}
         />
@@ -82,10 +82,10 @@ export default function DoctorsPage() {
       {filteredDoctors.length === 0 ? (
         <EmptyState
           icon={<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>}
-          title={doctorSearch ? 'No physicians match that search' : 'No physicians registered yet'}
+          title={doctorSearch ? 'No doctors match that search' : 'No doctors registered yet'}
           description={doctorSearch
             ? 'Clear the search box to see the full clinic directory.'
-            : 'Students cannot book a consultation until at least one physician exists.'}
+            : 'Students cannot book a consultation until at least one doctor exists.'}
           action={(
             <button type="button" className="btn btn-primary btn-sm" onClick={openAddDoctorModal}>
               Register a Doctor
@@ -124,11 +124,11 @@ export default function DoctorsPage() {
       <Modal
         isOpen={doctorModalOpen}
         onClose={() => setDoctorModalOpen(false)}
-        title={editingDoctor ? `Edit Dr. ${editingDoctor.name}` : 'Register New Physician'}
+        title={editingDoctor ? `Edit Dr. ${editingDoctor.name}` : 'Register New Doctor'}
       >
         <form onSubmit={handleDoctorFormSubmit}>
           <div className="form-group">
-            <label className="form-label" htmlFor="doc-name">Physician Full Name *</label>
+            <label className="form-label" htmlFor="doc-name">Doctor Full Name *</label>
             <input
               id="doc-name"
               className="input"
@@ -177,7 +177,7 @@ export default function DoctorsPage() {
       <Modal
         isOpen={Boolean(deleteDoctorTarget)}
         onClose={() => setDeleteDoctorTarget(null)}
-        title="Delete Physician"
+        title="Delete Doctor"
       >
         <p className="modal-body-text">
           Are you sure you want to remove <strong>Dr. {deleteDoctorTarget?.name}</strong> from the clinic staff directory?

@@ -9,7 +9,6 @@ import { ToastProvider, useToast } from '../../context/ToastContext';
 const UsersIcon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>;
 const PulseIcon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>;
 const CalendarIcon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>;
-const GlobeIcon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
 
 export function useAdminData() {
   return useOutletContext();
@@ -52,21 +51,18 @@ function AdminLayoutInner() {
           to: '/admin/users', label: 'User Accounts', shortLabel: 'Users', icon: UsersIcon, count: users.length,
         },
         {
-          to: '/admin/doctors', label: 'Physicians', shortLabel: 'Doctors', icon: PulseIcon, count: doctors.length,
+          to: '/admin/doctors', label: 'Doctors', shortLabel: 'Doctors', icon: PulseIcon, count: doctors.length,
         },
         {
           to: '/admin/appointments', label: 'All Appointments', shortLabel: 'Visits', icon: CalendarIcon, count: appointments.length,
         },
-        {
-          to: '/admin/integrations', label: 'Integrations', shortLabel: 'APIs', icon: GlobeIcon,
-        },
       ]}
     >
       <PageHeader
-        title="Clinic Administration Hub"
+        title="Administration"
         badge="Master Control"
         badgeClass="badge-admin"
-        description="Manage system identity accounts, clinical personnel, campus schedules, and external integrations."
+        description="Manage system identity accounts, clinical personnel, and campus schedules."
       />
 
       {/* Counts stay here: on the admin screens, counting is the job. */}
@@ -82,7 +78,7 @@ function AdminLayoutInner() {
           tint="rgba(45, 212, 191, 0.15)"
           color="#2dd4bf"
           value={doctors.length}
-          label="Active Physicians"
+          label="Active Doctors"
           icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>}
         />
         <StatCard

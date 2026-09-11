@@ -16,7 +16,6 @@ import AdminLayout from '../features/admin/AdminLayout';
 import UsersPage from '../features/admin/UsersPage';
 import DoctorsPage from '../features/admin/DoctorsPage';
 import AdminAppointmentsPage from '../features/admin/AdminAppointmentsPage';
-import IntegrationsPage from '../features/admin/IntegrationsPage';
 
 import ProtectedRoute from './ProtectedRoute';
 
@@ -55,7 +54,6 @@ export default function AppRoutes() {
         <Route path="users" element={<UsersPage />} />
         <Route path="doctors" element={<DoctorsPage />} />
         <Route path="appointments" element={<AdminAppointmentsPage />} />
-        <Route path="integrations" element={<IntegrationsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
