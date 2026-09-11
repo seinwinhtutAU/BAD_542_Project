@@ -6,14 +6,21 @@ import { useToast } from '../../context/ToastContext';
 import { useAdminData } from './AdminLayout';
 
 export default function DoctorsPage() {
-  const { doctors, reload } = useAdminData();
+  const { doctors, users, reload } = useAdminData();
   const showToast = useToast();
 
   const [doctorSearch, setDoctorSearch] = useState('');
   const [doctorModalOpen, setDoctorModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
-  const [doctorForm, setDoctorForm] = useState({ name: '', specialty: '', room: '' });
+  const [doctorForm, setDoctorForm] = useState({
+    name: '', specialty: '', room: '', userId: '',
+  });
   const [deleteDoctorTarget, setDeleteDoctorTarget] = useState(null);
+
+  // A login account can back only one clinic record, so offer the DOCTOR
+  // accounts that are still free, plus the one this record already holds.
+  const linkableUsers = users.filter((u) => u.role === 'DOCTOR'
+    && (!doctors.some((d) => d.userId === u.id) || String(u.id) === String(doctorForm.userId)));
 
   const filteredDoctors = doctors.filter((d) => {
     const term = doctorSearch.toLowerCase();
@@ -24,13 +31,20 @@ export default function DoctorsPage() {
 
   function openAddDoctorModal() {
     setEditingDoctor(null);
-    setDoctorForm({ name: '', specialty: '', room: '' });
+    setDoctorForm({
+      name: '', specialty: '', room: '', userId: '',
+    });
     setDoctorModalOpen(true);
   }
 
   function openEditDoctorModal(doctor) {
     setEditingDoctor(doctor);
-    setDoctorForm({ name: doctor.name, specialty: doctor.specialty, room: doctor.room });
+    setDoctorForm({
+      name: doctor.name,
+      specialty: doctor.specialty,
+      room: doctor.room,
+      userId: doctor.userId ? String(doctor.userId) : '',
+    });
     setDoctorModalOpen(true);
   }
 
@@ -105,7 +119,9 @@ export default function DoctorsPage() {
               </div>
 
               <p className="text-sm text-muted">
-                University Medical Staff — Available for student bookings.
+                {d.userId
+                  ? 'University Medical Staff — Available for student bookings.'
+                  : 'No login account linked yet, so nobody can open this doctor\'s queue.'}
               </p>
 
               <div className="card-footer-actions">
@@ -161,6 +177,25 @@ export default function DoctorsPage() {
               onChange={(e) => setDoctorForm({ ...doctorForm, room: e.target.value })}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="doc-user">Login Account</label>
+            <select
+              id="doc-user"
+              className="input"
+              value={doctorForm.userId}
+              onChange={(e) => setDoctorForm({ ...doctorForm, userId: e.target.value })}
+            >
+              <option value="">Not linked yet</option>
+              {linkableUsers.map((u) => (
+                <option key={u.id} value={u.id}>{`${u.name} (${u.email})`}</option>
+              ))}
+            </select>
+            <p className="text-xs text-muted">
+              Until an account is linked here, that doctor cannot open their appointment queue.
+              Only users who already have the DOCTOR role are listed.
+            </p>
           </div>
 
           <div className="modal-actions">

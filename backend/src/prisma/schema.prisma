@@ -29,13 +29,21 @@ model User {
   adId         String?       @unique
   createdAt    DateTime      @default(now())
   appointments Appointment[]
+  doctor       Doctor?
 }
 
 model Doctor {
-  id           Int           @id @default(autoincrement())
-  name         String
-  specialty    String
-  room         String
+  id        Int    @id @default(autoincrement())
+  name      String
+  specialty String
+  room      String
+
+  // The clinic record and the login account are separate things: a doctor can
+  // be listed for booking before they ever sign in. Once linked, this is what
+  // scopes the queue, so a doctor sees their own patients and nobody else's.
+  userId Int?  @unique
+  user   User? @relation(fields: [userId], references: [id])
+
   appointments Appointment[]
 }
 

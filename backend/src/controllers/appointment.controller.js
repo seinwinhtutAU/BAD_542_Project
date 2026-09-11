@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const { createAppointment } = require('../services/appointment.service');
 const { publicUserSelect } = require('../utils/user');
+const { doctorIdForUser, UNLINKED_ERROR } = require('../utils/doctorScope');
 
 const STATUSES = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
 
@@ -33,7 +34,18 @@ async function listMine(req, res, next) {
 
 async function listAll(req, res, next) {
   try {
+    // Admins oversee the whole clinic; a doctor sees only their own queue.
+    const where = {};
+    if (req.user.role === 'DOCTOR') {
+      const doctorId = await doctorIdForUser(req.user);
+      if (!doctorId) {
+        return res.status(403).json({ error: UNLINKED_ERROR });
+      }
+      where.doctorId = doctorId;
+    }
+
     const appointments = await prisma.appointment.findMany({
+      where,
       include: { student: { select: publicUserSelect }, doctor: true, prescription: true },
       orderBy: { appointmentDate: 'desc' },
     });
@@ -58,6 +70,15 @@ async function updateStatus(req, res, next) {
     const existing = await prisma.appointment.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    // Somebody else's consultation is not this doctor's to advance. 404 rather
+    // than 403, so the reply can't be used to probe which ids exist.
+    if (req.user.role === 'DOCTOR') {
+      const doctorId = await doctorIdForUser(req.user);
+      if (existing.doctorId !== doctorId) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
     }
 
     const appointment = await prisma.appointment.update({

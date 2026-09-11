@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { doctorIdForUser } = require('../utils/doctorScope');
 
 async function create(req, res, next) {
   try {
@@ -22,6 +23,13 @@ async function create(req, res, next) {
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
+
+    // Only the attending doctor writes the prescription for a consultation.
+    const doctorId = await doctorIdForUser(req.user);
+    if (appointment.doctorId !== doctorId) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
     if (appointment.prescription) {
       return res.status(409).json({
         error: 'This appointment already has a prescription',
@@ -57,9 +65,13 @@ async function getByAppointment(req, res, next) {
       include: { prescription: true },
     });
 
-    // A student may only read their own prescription. Answer 404 rather than 403
-    // so the response can't be used to probe which appointment ids exist.
+    // A student may only read their own prescription, and a doctor only those
+    // of their own patients. Answer 404 rather than 403 so the response can't
+    // be used to probe which appointment ids exist.
     if (!appointment || (req.user.role === 'STUDENT' && appointment.studentId !== req.user.sub)) {
+      return res.status(404).json({ error: 'Prescription not found' });
+    }
+    if (req.user.role === 'DOCTOR' && appointment.doctorId !== await doctorIdForUser(req.user)) {
       return res.status(404).json({ error: 'Prescription not found' });
     }
 
@@ -85,8 +97,14 @@ async function update(req, res, next) {
       return res.status(400).json({ error: 'medicine and dosage are required' });
     }
 
-    const existing = await prisma.prescription.findUnique({ where: { id } });
+    const existing = await prisma.prescription.findUnique({
+      where: { id },
+      include: { appointment: true },
+    });
     if (!existing) {
+      return res.status(404).json({ error: 'Prescription not found' });
+    }
+    if (existing.appointment.doctorId !== await doctorIdForUser(req.user)) {
       return res.status(404).json({ error: 'Prescription not found' });
     }
 
