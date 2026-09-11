@@ -182,21 +182,21 @@ export default function LoginPage() {
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={() => fillDevAccount('admin@test.com', 'admin123')}
+              onClick={() => fillDevAccount('admin@au.edu', 'admin123')}
             >
               Admin
             </button>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={() => fillDevAccount('doctor@test.com', 'doctor123')}
+              onClick={() => fillDevAccount('doctor@au.edu', 'doctor123')}
             >
               Doctor
             </button>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={() => fillDevAccount('student@test.com', 'student123')}
+              onClick={() => fillDevAccount('student@au.edu', 'student123')}
             >
               Student
             </button>

@@ -514,6 +514,49 @@ a:hover {
   line-height: 1.45;
 }
 
+.ai-summary-row,
+.ai-summary-safety {
+  line-height: 1.55;
+}
+
+.ai-summary-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ai-summary-label {
+  color: rgba(233, 213, 255, 0.68);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ai-summary-summary .ai-summary-label,
+.ai-summary-safety .ai-summary-label {
+  margin-bottom: 0.25rem;
+}
+
+.ai-summary-value {
+  color: #fff;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ai-summary-safety {
+  border-left: 3px solid #f59e0b;
+  margin-top: 1rem;
+  padding-left: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .ai-summary-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Prescription Card */
 .prescription-card {
   background: rgba(13, 148, 136, 0.08);

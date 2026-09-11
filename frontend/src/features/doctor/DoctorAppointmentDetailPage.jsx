@@ -4,6 +4,7 @@ import apiClient from '../../services/apiClient';
 import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
 import StatusTimeline from '../../components/StatusTimeline';
+import AiSymptomSummary, { splitSymptomNote } from '../../components/AiSymptomSummary';
 import { useToast } from '../../context/ToastContext';
 import { useDoctorData } from './DoctorLayout';
 
@@ -41,9 +42,7 @@ export default function DoctorAppointmentDetailPage() {
   }
 
   const when = new Date(appointment.appointmentDate);
-  const parts = (appointment.symptoms || '').split(/\n\nAI summary:\s*/i);
-  const reported = parts[0] || '';
-  const aiSummary = parts[1] || '';
+  const { reported, analysis } = splitSymptomNote(appointment.symptoms);
 
   function openModal() {
     setForm({
@@ -156,13 +155,13 @@ export default function DoctorAppointmentDetailPage() {
         </div>
       )}
 
-      {aiSummary && (
+      {analysis && (
         <div className="ai-summary-box">
           <div className="ai-summary-header">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
             DeepSeek AI Clinical Summary
           </div>
-          <div className="ai-summary-content">{aiSummary}</div>
+          <AiSymptomSummary analysis={analysis} />
         </div>
       )}
 

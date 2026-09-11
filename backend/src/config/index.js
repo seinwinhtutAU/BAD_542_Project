@@ -12,5 +12,5 @@ module.exports = {
   peerApiBaseUrl: process.env.PEER_API_BASE_URL,
   peerApiKeyOutbound: process.env.PEER_API_KEY_OUTBOUND,
   deepseekApiKey: process.env.DEEPSEEK_API_KEY,
-  deepseekApiUrl: process.env.DEEPSEEK_API_URL,
+  deepseekApiBaseUrl: process.env.DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com',
 };

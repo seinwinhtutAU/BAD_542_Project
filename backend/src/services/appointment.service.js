@@ -3,6 +3,16 @@ const { getActiveAlerts } = require('./slAlerts.service');
 const { summarizeSymptoms } = require('./deepseek.service');
 const { isValidSlot } = require('./schedule.service');
 
+function formatSymptomAnalysis(analysis) {
+  return [
+    'AI symptom analysis:',
+    `Summary: ${analysis.summary}`,
+    `Urgency: ${analysis.urgency}`,
+    `Suggested specialty: ${analysis.suggestedSpecialty}`,
+    `Safety note: ${analysis.safetyNote}`,
+  ].join('\n');
+}
+
 async function createAppointment({
   studentId, doctorId, appointmentDate, symptoms,
 }) {
@@ -35,7 +45,7 @@ async function createAppointment({
     throw Object.assign(new Error(`New appointments are paused: ${blockingAlert.title}`), { status: 409 });
   }
 
-  const summary = symptoms ? await summarizeSymptoms(symptoms).catch(() => null) : null;
+  const analysis = symptoms?.trim() ? await summarizeSymptoms(symptoms) : null;
 
   try {
     return await prisma.appointment.create({
@@ -43,7 +53,9 @@ async function createAppointment({
         studentId,
         doctorId,
         appointmentDate: when,
-        symptoms: summary ? `${symptoms}\n\nAI summary: ${summary}` : symptoms,
+        symptoms: analysis
+          ? `${symptoms}\n\n${formatSymptomAnalysis(analysis)}`
+          : symptoms,
       },
     });
   } catch (err) {

@@ -5,6 +5,7 @@ import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
 import StatusTimeline from '../../components/StatusTimeline';
 import PrescriptionSlip from '../../components/PrescriptionSlip';
+import { splitSymptomNote } from '../../components/AiSymptomSummary';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useStudentData } from './StudentLayout';
@@ -42,7 +43,7 @@ export default function AppointmentDetailPage() {
   }
 
   const when = new Date(appointment.appointmentDate);
-  const [reported] = (appointment.symptoms || '').split('\n\nAI summary:');
+  const { reported } = splitSymptomNote(appointment.symptoms);
 
   async function confirmCancel() {
     try {

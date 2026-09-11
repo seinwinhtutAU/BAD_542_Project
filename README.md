@@ -23,9 +23,9 @@ node -e "
 const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
 new PrismaClient().user.upsert({
-  where: { email: 'admin@test.com' },
+  where: { email: 'admin@au.edu' },
   update: {},
-  create: { email: 'admin@test.com', name: 'Admin', role: 'ADMIN', password: bcrypt.hashSync('admin123', 10) },
+  create: { email: 'admin@au.edu', name: 'Admin', role: 'ADMIN', password: bcrypt.hashSync('admin123', 10) },
 }).then(console.log);
 "
 
@@ -34,7 +34,7 @@ cd ../frontend && cp .env.example .env
 npm install && npm run dev   # :5173
 ```
 
-Log in at `http://localhost:5173` with `admin@test.com` / `admin123`.
+Log in at `http://localhost:5173` with `admin@au.edu` / `admin123`.
 
 ## Architecture
 
@@ -99,9 +99,9 @@ const prisma = new PrismaClient();
 (async () => {
   const password = await bcrypt.hash('admin123', 10);
   const user = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
+    where: { email: 'admin@au.edu' },
     update: {},
-    create: { email: 'admin@test.com', name: 'Admin', password, role: 'ADMIN' },
+    create: { email: 'admin@au.edu', name: 'Admin', password, role: 'ADMIN' },
   });
   console.log(user);
   await prisma.\$disconnect();
@@ -138,6 +138,64 @@ The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment
 This system currently exposes no endpoint back to the peer team; the previous
 `x-api-key`-protected appointments feed was removed. Classmate/team name and the
 API key exchange to be filled in once assigned.
+
+## External AI Integration — DeepSeek
+
+DeepSeek is used during student appointment booking to turn free-text symptoms into
+a concise, structured briefing for the attending doctor. The existing authenticated
+`POST /api/appointments` route triggers this work; no duplicate analysis route is
+needed.
+
+The request flow is:
+
+```text
+Student frontend -> Express appointment route -> DeepSeek chat API
+                 <- appointment containing original symptoms and AI analysis
+```
+
+The backend calls the `deepseek-chat` model and requests JSON fields named `summary`,
+`urgency`, `suggestedSpecialty`, and `safetyNote`. The API key is never sent to the
+frontend or returned in an API response. In production, `bootstrapSecrets()` retrieves
+the `DEEPSEEK-API-KEY` secret from Azure Key Vault at startup using
+`DefaultAzureCredential`. For local development only, `DEEPSEEK_API_KEY` may be placed
+in the uncommitted `backend/.env` file.
+
+### Configure Key Vault
+
+Create or rotate the secret using the Azure CLI. Use a replacement key, not a key that
+has been pasted into chat or committed to a repository:
+
+```bash
+az keyvault secret set \
+  --vault-name <your-key-vault-name> \
+  --name DEEPSEEK-API-KEY \
+  --value "$DEEPSEEK_API_KEY"
+```
+
+Production also needs `AZURE_KEY_VAULT_URL` and an Azure identity with permission to
+read secrets. The backend uses `https://api.deepseek.com` by default; override it with
+`DEEPSEEK_API_BASE_URL` only when required.
+
+### Test the integration
+
+Obtain a student JWT through the existing login flow and use a real doctor ID and a
+future clinic slot:
+
+```bash
+curl -X POST http://localhost:4000/api/appointments \
+  -H "Authorization: Bearer <STUDENT_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "doctorId": 1,
+    "appointmentDate": "2099-05-14T10:00:00.000Z",
+    "symptoms": "Headache and sore throat for two days"
+  }'
+```
+
+The response is the created appointment. Its `symptoms` field contains the original
+text followed by a readable `AI symptom analysis` section with labeled fields. If DeepSeek is unavailable, the
+backend logs diagnostic provider details server-side and returns a safe `503` response;
+the API key is never logged.
 
 ## Roles (RBAC)
 

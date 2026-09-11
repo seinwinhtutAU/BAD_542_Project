@@ -1,9 +1,9 @@
 # Local-only override, never used by deploy.sh on the VPS.
 # `up -d mysql` publishes MySQL's port so a host-run backend (npm run dev)
-# can reach it at localhost:3306 — the base docker-compose.yml deliberately
+# can reach it at localhost:3307 — the base docker-compose.yml deliberately
 # doesn't publish it, since that collides with an unrelated native mysqld
 # already bound to 0.0.0.0:3306 on the VPS.
 services:
   mysql:
     ports:
-      - "3306:3306"
+      - "3307:3306"

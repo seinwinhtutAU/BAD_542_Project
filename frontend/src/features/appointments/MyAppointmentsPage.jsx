@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../services/apiClient';
 import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
+import { splitSymptomNote } from '../../components/AiSymptomSummary';
 import { useToast } from '../../context/ToastContext';
 import { useStudentData } from './StudentLayout';
 
@@ -71,6 +72,7 @@ export default function MyAppointmentsPage() {
         <div className="item-grid">
           {filteredAppointments.map((a) => {
             const apptDate = new Date(a.appointmentDate);
+            const { reported } = splitSymptomNote(a.symptoms);
 
             return (
               <div key={a.id} className="appointment-item">
@@ -110,10 +112,10 @@ export default function MyAppointmentsPage() {
                   </div>
                 </div>
 
-                {a.symptoms && (
+                {reported && (
                   <div className="note-block">
                     <div className="note-label">Symptoms noted</div>
-                    <div className="note-text">{a.symptoms.split('\n\nAI summary:')[0]}</div>
+                    <div className="note-text">{reported}</div>
                   </div>
                 )}
 

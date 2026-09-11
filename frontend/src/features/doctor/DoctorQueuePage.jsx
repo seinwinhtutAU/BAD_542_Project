@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../services/apiClient';
 import Modal from '../../components/Modal';
 import EmptyState from '../../components/EmptyState';
+import AiSymptomSummary, { splitSymptomNote } from '../../components/AiSymptomSummary';
 import { useToast } from '../../context/ToastContext';
 import { useDoctorData } from './DoctorLayout';
 
@@ -13,12 +14,9 @@ const STATUS_CLASS = {
   CANCELLED: 'badge-cancelled',
 };
 
-// The AI summary is appended to the symptoms column by the backend rather than
-// stored separately, so it has to be split back out for display.
 function parseSymptoms(symptomsText) {
-  if (!symptomsText) return { studentSymptoms: '', aiSummary: '' };
-  const parts = symptomsText.split(/\n\nAI summary:\s*/i);
-  return { studentSymptoms: parts[0] || '', aiSummary: parts[1] || '' };
+  const { reported, analysis } = splitSymptomNote(symptomsText);
+  return { studentSymptoms: reported, aiSummary: analysis };
 }
 
 export default function DoctorQueuePage() {
@@ -203,7 +201,7 @@ export default function DoctorQueuePage() {
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
                       DeepSeek AI Clinical Summary
                     </div>
-                    <div className="ai-summary-content">{aiSummary}</div>
+                    <AiSymptomSummary analysis={aiSummary} />
                   </div>
                 )}
 

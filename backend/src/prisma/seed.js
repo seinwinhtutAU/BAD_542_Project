@@ -4,9 +4,9 @@ const prisma = require('../config/prisma');
 // Test accounts for the dev-login form. These match the "Quick Dev Fill"
 // buttons on the login page — keep the two in sync if you change them.
 const TEST_USERS = [
-  { email: 'admin@test.com', name: 'Admin', role: 'ADMIN', password: 'admin123' },
-  { email: 'doctor@test.com', name: 'Dr. Aung Kyaw', role: 'DOCTOR', password: 'doctor123' },
-  { email: 'student@test.com', name: 'Test Student', role: 'STUDENT', password: 'student123' },
+  { email: 'admin@au.edu', name: 'Admin', role: 'ADMIN', password: 'admin123' },
+  { email: 'doctor@au.edu', name: 'Dr. Aung Kyaw', role: 'DOCTOR', password: 'doctor123' },
+  { email: 'student@au.edu', name: 'Test Student', role: 'STUDENT', password: 'student123' },
 ];
 
 // Without at least one doctor the student booking form has an empty dropdown,
