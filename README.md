@@ -1,12 +1,49 @@
 # Campus Health Appointment & Medicine Management System
 
-Web application for students to book appointments with university doctors, authenticated via the University's Microsoft Active Directory. Doctors manage appointments and prescriptions; administrators manage users, doctors, and schedules. Uses DeepSeek to summarize reported symptoms for doctors.
+A web application for students to book appointments with university doctors,
+authenticated via the university's Microsoft Active Directory. Doctors manage
+their appointment queue and write prescriptions; administrators manage users,
+doctors, and schedules. DeepSeek AI summarizes each student's reported
+symptoms into a structured briefing for the attending doctor.
 
-See [docs/req.md](docs/req.md) and [docs/Design_Document_Campus_Health_Appointment_System.pdf](docs/Design_Document_Campus_Health_Appointment_System.pdf) for the full requirements and design.
+Full requirements and design: [docs/req.md](docs/req.md) and
+[docs/Design_Document_Campus_Health_Appointment_System.pdf](docs/Design_Document_Campus_Health_Appointment_System.pdf).
+
+## Tech stack
+
+| Layer      | Technology                                 |
+| ---------- | ------------------------------------------ |
+| Frontend   | React + Vite                               |
+| Backend    | Node.js / Express                          |
+| Database   | MySQL, managed with Prisma ORM             |
+| Auth       | JWT + RBAC, Microsoft Azure AD (MSAL/OIDC) |
+| Secrets    | Azure Key Vault (production)               |
+| AI         | DeepSeek (`deepseek-chat`)                 |
+| Deployment | Docker Compose behind Nginx                |
+
+## Architecture
+
+```
+Users -> Nginx (HTTPS, /project path) -> React frontend
+                                       -> Node.js/Express API -> Prisma -> MySQL
+                                                                -> Azure AD (auth)
+                                                                -> Azure Key Vault (secrets)
+                                                                -> DeepSeek API (symptom summary)
+```
+
+The production frontend build is served under the `/project` path
+(`VITE_BASE_PATH`), matching the VPS's outer Nginx, which proxies
+`/project/api/` to the backend and forwards `/project/` (prefix stripped) to
+the frontend container. Because asset URLs and API calls are baked into the
+build at `/project/...`, hitting the frontend Docker image directly without
+that proxy in front (e.g. `http://localhost:8081/`) produces a blank page.
+Day-to-day development doesn't hit this — use `npm run dev` for both apps.
 
 ## Quick start
 
-Gets you logged in at `http://localhost:5173` with a dev-login test account. No Azure AD setup needed for this path — see [Setup](#setup) below for AD login, MySQL alternatives, and the Docker Compose / VPS deploy details this glosses over.
+Gets you logged in at `http://localhost:5173` with a dev-login test account.
+No Azure AD setup needed for this path — see [Setup](#setup) below for AD
+login, MySQL alternatives, and Docker Compose / VPS deployment.
 
 ```bash
 # 1. Database (Docker)
@@ -16,7 +53,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml u
 # 2. Backend
 cd backend && cp .env.example .env
 npm install && npx prisma migrate dev
-npm run dev &   # keep this running; :4000
+npm run dev &   # keep running; :4000
 
 # 3. Create a test account (fresh DB has no users)
 node -e "
@@ -36,30 +73,24 @@ npm install && npm run dev   # :5173
 
 Log in at `http://localhost:5173` with `admin@au.edu` / `admin123`.
 
-## Architecture
-
-```
-Users -> Nginx (HTTPS, /project path) -> React frontend
-                                       -> Node.js/Express API -> Prisma -> MySQL
-                                                                -> Azure AD (auth)
-                                                                -> Azure Key Vault (secrets)
-                                                                -> DeepSeek API (symptom summary)
-```
-
-The frontend's production build is served under the `/project` path (`VITE_BASE_PATH`), matching the VPS's outer nginx, which also proxies `/project/api/` straight to the backend and strips the prefix before forwarding `/project/` itself to the frontend container. Hitting the Docker frontend image directly with no such proxy in front (e.g. `http://localhost:8081/`) doesn't work around this — the built asset URLs and API calls are baked in at `/project/...`, which don't exist at that path inside the container, so you get a blank page or a "text/html instead of a JS module" console error. Day-to-day local dev doesn't hit this at all — use `npm run dev` for both frontend and backend (see Setup below).
-
 ## Setup
 
 ### Database
 
-The easiest path is Docker Compose's `mysql` service, since its credentials already match `backend/.env`. The base `docker-compose.yml` deliberately does *not* publish MySQL's port to the host — on the VPS that collides with an unrelated native `mysqld` already bound to `0.0.0.0:3306` (see [docker/docker-compose.local.yml](docker/docker-compose.local.yml)'s comment for the story). For a host-run backend (`npm run dev`), publish the port via the local-only override instead, which `deploy.sh` never touches:
+The easiest path is Docker Compose's `mysql` service; its credentials already
+match `backend/.env`. The base `docker-compose.yml` deliberately does not
+publish MySQL's port to the host, since the VPS already has a native `mysqld`
+bound to `0.0.0.0:3306`. For a host-run backend, publish the port via the
+local-only override instead (never used by `deploy.sh`):
 
 ```bash
 cp docker/.env.example docker/.env   # set MYSQL_PASSWORD / MYSQL_ROOT_PASSWORD
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql   # publishes 3306 to localhost
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml up -d mysql
 ```
 
-Alternatively, use a MySQL install of your own. `prisma migrate dev` needs a "shadow database" to diff against, so the user needs privileges to create databases, not just access `campus_health`:
+Alternatively, use your own MySQL install. `prisma migrate dev` needs a
+"shadow database" to diff against, so the user needs privileges to create
+databases, not just access `campus_health`:
 
 ```bash
 mysql -u root <<'EOF'
@@ -82,33 +113,22 @@ DATABASE_URL="mysql://campus_health:campus_health_dev@localhost:3306/campus_heal
 
 ```bash
 cd backend
-cp .env.example .env   # then edit DATABASE_URL as above, and AZURE_AD_* to match the frontend
+cp .env.example .env   # edit DATABASE_URL as above, and AZURE_AD_* to match the frontend
 npm install
 npx prisma migrate dev
 npm run dev
 ```
 
-There is no seed script, so a fresh database has no users — the dev-login form (`/api/auth/login/dev`) has nothing to authenticate against until you create one. Create a local test account with:
+There is no seed script, so a fresh database has no users — the dev-login
+form (`POST /api/auth/login/dev`) has nothing to authenticate against until
+you create one (see step 3 of Quick start).
 
-```bash
-node -e "
-const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-(async () => {
-  const password = await bcrypt.hash('admin123', 10);
-  const user = await prisma.user.upsert({
-    where: { email: 'admin@au.edu' },
-    update: {},
-    create: { email: 'admin@au.edu', name: 'Admin', password, role: 'ADMIN' },
-  });
-  console.log(user);
-  await prisma.\$disconnect();
-})();
-"
-```
-
-Signing in via "Log in with University AD" doesn't need a seeded user — `POST /api/auth/login/ad` upserts a `STUDENT` user from the validated Azure AD token automatically. That flow needs `AZURE_AD_TENANT_ID`/`AZURE_AD_CLIENT_ID` in `backend/.env` to match `VITE_AZURE_AD_TENANT_ID`/`VITE_AZURE_AD_CLIENT_ID` in `frontend/.env`, and your browser to allow the Microsoft sign-in popup (Chrome silently blocks it on some sites — check the address bar for a blocked-popup icon if the button seems to do nothing).
+Signing in via "Log in with University AD" doesn't need a seeded user —
+`POST /api/auth/login/ad` upserts a `STUDENT` user from the validated Azure
+AD token automatically. That flow needs `AZURE_AD_TENANT_ID` /
+`AZURE_AD_CLIENT_ID` in `backend/.env` to match `VITE_AZURE_AD_TENANT_ID` /
+`VITE_AZURE_AD_CLIENT_ID` in `frontend/.env`, and your browser to allow the
+Microsoft sign-in popup.
 
 ### Frontend
 
@@ -121,40 +141,57 @@ npm run dev
 
 ### Full stack locally via Docker Compose
 
-Not needed for regular dev (use `npm run dev` above); this reproduces the VPS's build for testing the Docker images themselves, built with the `/project` base path (see the Architecture note above for why browsing it directly at `http://localhost:8081/` doesn't work without a path-stripping proxy in front):
+Not needed for regular development (use `npm run dev` above). This reproduces
+the VPS build, including the `/project` base path noted in Architecture
+above:
 
 ```bash
 cp docker/.env.example docker/.env   # compose reads .env from the same dir as the compose file, not the repo root
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-The `backend` service overrides `DATABASE_URL` from `backend/.env` (`environment:` in `docker-compose.yml`) to point at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL` targets `localhost`, which is only correct for a host-run backend, not the containerized one.
+The `backend` service overrides `DATABASE_URL` from `backend/.env` to point
+at the `mysql` service by hostname — `backend/.env`'s own `DATABASE_URL`
+targets `localhost`, which is only correct for a host-run backend.
 
-## External AI Integration — DeepSeek
+### Deployment
 
-DeepSeek is used during student appointment booking to turn free-text symptoms into
-a concise, structured briefing for the attending doctor. The existing authenticated
-`POST /api/appointments` route triggers this work; no duplicate analysis route is
-needed.
+`deploy.sh` builds and deploys the Docker Compose stack on the VPS behind the
+Nginx configuration in [nginx/](nginx). See
+[docs/VPS_DEPLOYMENT_RUNBOOK.md](docs/VPS_DEPLOYMENT_RUNBOOK.md) for the full
+runbook.
 
-The request flow is:
+## Roles (RBAC)
 
-```text
+| Role          | Permissions                                          |
+| ------------- | ---------------------------------------------------- |
+| Student       | Book/cancel appointments, view prescriptions         |
+| Doctor        | Manage their appointment queue, create prescriptions |
+| Administrator | Manage users, doctors, appointments, configuration   |
+
+## External AI integration — DeepSeek
+
+DeepSeek turns a student's free-text symptoms into a structured briefing for
+the attending doctor during appointment booking. No separate route is
+needed — the existing authenticated `POST /api/appointments` route triggers
+the analysis.
+
+```
 Student frontend -> Express appointment route -> DeepSeek chat API
                  <- appointment containing original symptoms and AI analysis
 ```
 
-The backend calls the `deepseek-chat` model and requests JSON fields named `summary`,
-`urgency`, `suggestedSpecialty`, and `safetyNote`. The API key is never sent to the
-frontend or returned in an API response. In production, `bootstrapSecrets()` retrieves
-the `DEEPSEEK-API-KEY` secret from Azure Key Vault at startup using
-`DefaultAzureCredential`. For local development only, `DEEPSEEK_API_KEY` may be placed
-in the uncommitted `backend/.env` file.
+The backend calls the `deepseek-chat` model and requests JSON fields named
+`summary`, `urgency`, `suggestedSpecialty`, and `safetyNote`. The API key is
+never sent to the frontend or returned in any API response. In production,
+`bootstrapSecrets()` retrieves the `DEEPSEEK-API-KEY` secret from Azure Key
+Vault at startup using `DefaultAzureCredential`. For local development only,
+`DEEPSEEK_API_KEY` may be placed in the uncommitted `backend/.env` file.
+
+If DeepSeek is unavailable, the backend logs diagnostic details server-side
+and returns a safe `503` response; the API key is never logged.
 
 ### Configure Key Vault
-
-Create or rotate the secret using the Azure CLI. Use a replacement key, not a key that
-has been pasted into chat or committed to a repository:
 
 ```bash
 az keyvault secret set \
@@ -163,13 +200,13 @@ az keyvault secret set \
   --value "$DEEPSEEK_API_KEY"
 ```
 
-Production also needs `AZURE_KEY_VAULT_URL` and an Azure identity with permission to
-read secrets. The backend uses `https://api.deepseek.com` by default; override it with
-`DEEPSEEK_API_BASE_URL` only when required.
+Production also needs `AZURE_KEY_VAULT_URL` and an Azure identity with
+permission to read secrets. The backend uses `https://api.deepseek.com` by
+default; override with `DEEPSEEK_API_BASE_URL` only when required.
 
 ### Test the integration
 
-Obtain a student JWT through the existing login flow and use a real doctor ID and a
+Obtain a student JWT through the login flow, then use a real doctor ID and a
 future clinic slot:
 
 ```bash
@@ -183,15 +220,11 @@ curl -X POST http://localhost:4000/api/appointments \
   }'
 ```
 
-The response is the created appointment. Its `symptoms` field contains the original
-text followed by a readable `AI symptom analysis` section with labeled fields. If DeepSeek is unavailable, the
-backend logs diagnostic provider details server-side and returns a safe `503` response;
-the API key is never logged.
+The response is the created appointment. Its `symptoms` field contains the
+original text followed by a readable "AI symptom analysis" section.
 
-## Roles (RBAC)
+## CI
 
-| Role | Permissions |
-|---|---|
-| Student | Book/cancel appointments, view prescriptions |
-| Doctor | Manage appointments, create prescriptions |
-| Administrator | Manage users, doctors, appointments, configuration |
+[.github/workflows/ci.yml](.github/workflows/ci.yml) installs dependencies
+and runs `prisma generate` for the backend and `vite build` for the frontend
+on every push and pull request to `main`.
