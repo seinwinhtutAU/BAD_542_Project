@@ -109,7 +109,7 @@ DATABASE_URL="mysql://campus_health:campus_health_dev@localhost:3306/campus_heal
 
 (Use a real password and narrower grants for anything beyond local dev.)
 
-### Backend
+### Backend Running
 
 ```bash
 cd backend
@@ -130,7 +130,7 @@ AD token automatically. That flow needs `AZURE_AD_TENANT_ID` /
 `VITE_AZURE_AD_CLIENT_ID` in `frontend/.env`, and your browser to allow the
 Microsoft sign-in popup.
 
-### Frontend
+### Frontend Running
 
 ```bash
 cd frontend
